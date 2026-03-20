@@ -5,7 +5,7 @@ Use this guide to run the mobile project in Docker.
 ## Quick Start
 
 ```bash
-cd /path/to/fi-man/fi-man-mobile
+cd /path/to/fi-cal-final
 docker compose up -d --build
 ```
 
@@ -33,9 +33,8 @@ docker compose logs -f
 ## Rebuild After Updates
 
 ```bash
-cd /path/to/fi-man
+cd /path/to/fi-cal-final
 git pull origin master
-cd fi-man-mobile
 docker compose down
 docker compose build --no-cache
 docker compose up -d
@@ -44,10 +43,9 @@ docker compose up -d
 ### GitHub + Docker Update Checklist
 
 ```bash
-cd /path/to/fi-man
+cd /path/to/fi-cal-final
 git fetch origin
-git pull origin master
-cd fi-man-mobile
+git pull origin main
 docker compose down
 docker compose build --no-cache
 docker compose up -d

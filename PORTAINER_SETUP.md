@@ -26,7 +26,7 @@ Access the app:
 services:
   finance-calendar-mobile:
     build:
-      context: https://github.com/newgithubguy/fi-man.git#master:fi-man-mobile
+      context: https://github.com/newgithubguy/fi-cal-final.git#main
       dockerfile: Dockerfile
     container_name: finance-calendar-mobile
     ports:
@@ -59,7 +59,7 @@ volumes:
 
 ### GitHub + Portainer Update Checklist
 
-1. Confirm the stack uses repo `https://github.com/newgithubguy/fi-man.git` and file `fi-man-mobile/portainer-stack.yml`.
+1. Confirm the stack uses repo `https://github.com/newgithubguy/fi-cal-final.git` and branch `main`.
 2. Click **Pull and redeploy**.
 3. If updates are still stale, stop and update stack, then rebuild from CLI with `--no-cache`.
 4. Hard refresh the browser.

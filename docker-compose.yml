@@ -6,7 +6,7 @@ services:
       args:
         APP_VERSION: "1.1.1"
     container_name: finance-calendar-mobile
-    image: fi-man-mobile:1.1.1
+    image: fi-cal-final:1.1.1
     ports:
       - "8081:3000"
     volumes:
@@ -18,7 +18,7 @@ services:
       - SESSION_SECRET=change-this-to-random-secret-in-production
       - APP_VERSION=1.1.1
     labels:
-      - app.name=fi-man-mobile
+      - app.name=fi-cal-final
       - app.version=1.1.1
     restart: unless-stopped
     healthcheck:
