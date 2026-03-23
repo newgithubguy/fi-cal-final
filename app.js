@@ -31,6 +31,7 @@ const descriptionHint = document.getElementById("descriptionHint");
 const payeeInput = document.getElementById("payeeInput");
 const notesInput = document.getElementById("notesInput");
 const amountInput = document.getElementById("amountInput");
+const transactionTypeInput = document.getElementById("transactionTypeInput");
 const colorInput = document.getElementById("colorInput");
 const amountHint = document.getElementById("amountHint");
 const recurrenceInput = document.getElementById("recurrenceInput");
@@ -76,6 +77,7 @@ const editPayeeInput = document.getElementById("editPayeeInput");
 const editDescriptionInput = document.getElementById("editDescriptionInput");
 const editDescriptionHint = document.getElementById("editDescriptionHint");
 const editAmountInput = document.getElementById("editAmountInput");
+const editTransactionTypeInput = document.getElementById("editTransactionTypeInput");
 const editColorInput = document.getElementById("editColorInput");
 const editAmountHint = document.getElementById("editAmountHint");
 const editRecurrenceInput = document.getElementById("editRecurrenceInput");
@@ -115,6 +117,13 @@ const PANEL_LAYOUT_STORAGE_KEY = "finance-calendar-panel-layout";
 const MANUAL_TRANSACTION_NOTEPAD_KEY = "finance-calendar-manual-transactions-notepad";
 const ACCOUNT_QUICK_NOTES_KEY = "finance-calendar-account-quick-notes";
 const DEFAULT_TRANSACTION_COLOR = "#3b82f6";
+
+function updateTransactionTypeSelectColor(selectElement) {
+  if (!selectElement) return;
+  const selectedType = selectElement.value === "income" ? "income" : "expense";
+  selectElement.classList.remove("type-income", "type-expense");
+  selectElement.classList.add(selectedType === "income" ? "type-income" : "type-expense");
+}
 
 // Account management
 let accounts = [];
@@ -911,6 +920,14 @@ amountInput.addEventListener("input", () => {
   setAmountValidationHint();
 });
 
+if (transactionTypeInput) {
+  transactionTypeInput.classList.add("transaction-type-select");
+  updateTransactionTypeSelectColor(transactionTypeInput);
+  transactionTypeInput.addEventListener("change", () => {
+    updateTransactionTypeSelectColor(transactionTypeInput);
+  });
+}
+
 amountInput.addEventListener("blur", () => {
   setAmountValidationHint({ showRequiredWhenEmpty: true });
 });
@@ -922,6 +939,14 @@ editAmountInput.addEventListener("input", () => {
 editAmountInput.addEventListener("blur", () => {
   setEditAmountValidationHint({ showRequiredWhenEmpty: true });
 });
+
+if (editTransactionTypeInput) {
+  editTransactionTypeInput.classList.add("transaction-type-select");
+  updateTransactionTypeSelectColor(editTransactionTypeInput);
+  editTransactionTypeInput.addEventListener("change", () => {
+    updateTransactionTypeSelectColor(editTransactionTypeInput);
+  });
+}
 
 editDateInput.addEventListener("change", () => {
   setEditDateValidationHint();
@@ -1128,14 +1153,17 @@ transactionForm.addEventListener("submit", (event) => {
   const description = descriptionInput.value.trim();
   const payee = payeeInput.value.trim();
   const notes = notesInput.value.trim();
-  const amount = Number(amountInput.value);
+  const rawAmount = Number(amountInput.value);
+  const transactionType = transactionTypeInput && transactionTypeInput.value === "income" ? "income" : "expense";
+  const amountMagnitude = Math.abs(rawAmount);
+  const amount = transactionType === "expense" ? -amountMagnitude : amountMagnitude;
   const color = normalizeTransactionColor(colorInput ? colorInput.value : DEFAULT_TRANSACTION_COLOR);
   const recurrence = recurrenceInput.value;
   const recurrenceEndDateValue = recurrenceEndDateInput ? recurrenceEndDateInput.value : "";
   const isTransfer = isTransferInput.checked;
   const transferToAccountId = transferAccountInput.value;
 
-  if (!date || !description || Number.isNaN(amount) || amount === 0) {
+  if (!date || !description || Number.isNaN(rawAmount) || rawAmount === 0) {
     setDateValidationHint({ showRequiredWhenEmpty: true });
     setDescriptionValidationHint({ showRequiredWhenEmpty: true });
     setAmountValidationHint({ showRequiredWhenEmpty: true });
@@ -1209,6 +1237,10 @@ transactionForm.addEventListener("submit", (event) => {
 
   commitTransactions(nextTransactions);
   transactionForm.reset();
+  if (transactionTypeInput) {
+    transactionTypeInput.value = "expense";
+    updateTransactionTypeSelectColor(transactionTypeInput);
+  }
   if (colorInput) {
     colorInput.value = DEFAULT_TRANSACTION_COLOR;
   }
@@ -2744,7 +2776,11 @@ function openEditTransactionModal(transactionId, sourceItem = null) {
   editDateInput.value = editingOccurrenceDate;
   editPayeeInput.value = txn.payee || '';
   editDescriptionInput.value = txn.description || '';
-  editAmountInput.value = txn.amount;
+  editAmountInput.value = Math.abs(Number(txn.amount));
+  if (editTransactionTypeInput) {
+    editTransactionTypeInput.value = Number(txn.amount) < 0 ? "expense" : "income";
+    updateTransactionTypeSelectColor(editTransactionTypeInput);
+  }
   if (editColorInput) {
     editColorInput.value = normalizeTransactionColor(txn.color);
   }
@@ -2800,7 +2836,10 @@ editTransactionForm.addEventListener("submit", (event) => {
   const editedDescription = editDescriptionInput.value.trim();
   const editedNotes = editNotesInput.value.trim();
   const editedRecurrence = editRecurrenceInput.value;
-  const editedAmount = Number(editAmountInput.value);
+  const rawEditedAmount = Number(editAmountInput.value);
+  const editedTransactionType = editTransactionTypeInput && editTransactionTypeInput.value === "income" ? "income" : "expense";
+  const editedAmountMagnitude = Math.abs(rawEditedAmount);
+  const editedAmount = editedTransactionType === "expense" ? -editedAmountMagnitude : editedAmountMagnitude;
   const editedColor = normalizeTransactionColor(editColorInput ? editColorInput.value : DEFAULT_TRANSACTION_COLOR);
   const editedRecurrenceEndDateValue = editRecurrenceEndDateInput ? editRecurrenceEndDateInput.value : "";
 
@@ -2844,7 +2883,7 @@ editTransactionForm.addEventListener("submit", (event) => {
     seriesSplitDate: editingOccurrenceDate || editDateInput.value,
     payee: editPayeeInput.value.trim(),
     description: editDescriptionInput.value.trim(),
-    amount: Number(editAmountInput.value),
+    amount: editedAmount,
     color: editedColor,
     recurrence: editRecurrenceInput.value,
     recurrenceEndDate: editedRecurrenceEndDate,

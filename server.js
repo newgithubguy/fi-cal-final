@@ -246,14 +246,15 @@ function expandRecurringTransactions(transactions, months = 12) {
   const today = new Date();
   const endDate = new Date(today);
   endDate.setMonth(endDate.getMonth() + months);
-  const validRecurrences = new Set(['weekly', 'bi-weekly', 'monthly', 'quarterly', 'yearly']);
+  const validRecurrences = new Set(['daily', 'weekly', 'bi-weekly', 'monthly', 'quarterly', 'yearly']);
+  const nonRecurringValues = new Set(['', 'none', 'one-time']);
 
   for (const txn of transactions) {
     // Add the original transaction
     expanded.push(txn);
 
     // If it has recurrence, generate future instances
-    if (txn.recurrence && txn.recurrence !== 'none') {
+    if (txn.recurrence && !nonRecurringValues.has(txn.recurrence)) {
       if (!validRecurrences.has(txn.recurrence)) {
         console.warn('Skipping unknown recurrence type', {
           id: txn.id,
@@ -284,6 +285,9 @@ function expandRecurringTransactions(transactions, months = 12) {
 
         // Calculate next occurrence based on recurrence type
         switch (txn.recurrence) {
+          case 'daily':
+            nextDate.setDate(nextDate.getDate() + 1);
+            break;
           case 'weekly':
             nextDate.setDate(nextDate.getDate() + 7);
             break;

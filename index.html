@@ -167,7 +167,7 @@
               <span id="dateHint" class="field-hint" aria-live="polite"></span>
             </label>
             <label>
-              Payee
+              Payee / Description
               <input id="payeeInput" type="text" maxlength="60" placeholder="Walmart, Employer, Landlord..." />
               <span class="field-hint"></span>
             </label>
@@ -178,8 +178,16 @@
             </label>
             <label>
               Amount
-              <input id="amountInput" type="number" step="0.01" placeholder="Use negative for expenses" required />
+              <input id="amountInput" type="number" step="0.01" min="0.01" placeholder="Enter amount" required />
               <span id="amountHint" class="field-hint" aria-live="polite"></span>
+            </label>
+            <label>
+              Type
+              <select id="transactionTypeInput" aria-label="Transaction type">
+                <option value="expense" selected>Expense</option>
+                <option value="income">Income</option>
+              </select>
+              <span class="field-hint"></span>
             </label>
             <label>
               Color
@@ -282,7 +290,7 @@
           <span id="editDateHint" class="field-hint" aria-live="polite"></span>
         </label>
         <label>
-          Payee
+          Payee / Description
           <input id="editPayeeInput" type="text" maxlength="60" placeholder="Walmart, Employer, Landlord..." />
         </label>
         <label>
@@ -292,8 +300,16 @@
         </label>
         <label>
           Amount
-          <input id="editAmountInput" type="number" step="0.01" placeholder="Use negative for expenses" required />
+          <input id="editAmountInput" type="number" step="0.01" min="0.01" placeholder="Enter amount" required />
           <span id="editAmountHint" class="field-hint" aria-live="polite"></span>
+        </label>
+        <label>
+          Type
+          <select id="editTransactionTypeInput" aria-label="Edit transaction type">
+            <option value="expense" selected>Expense</option>
+            <option value="income">Income</option>
+          </select>
+          <span class="field-hint"></span>
         </label>
         <label>
           Color
