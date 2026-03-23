@@ -11,11 +11,12 @@ Simple browser-based finance tracker with:
 - **Recurring transactions** - Automatically expand weekly, bi-weekly, monthly, quarterly, and yearly transactions
 - **Recurring end date support** - Optionally stop recurring series on a selected date
 - **Transaction color tags** - Assign a color to each transaction and reuse those colors in category charts
+- **Income / Expense selector** - Choose transaction type instead of manually entering negative amounts
 - CSV import/export with recurring transaction expansion
 - Built-in calculator positioned in the accounts sidebar
 - Keyboard calculator support (top-row numbers and numpad)
 - Highlighted-day sidebar window showing transactions for the selected date
-- Compact workspace layout with Add Transaction and Transactions side by side below the calendar
+- Compact workspace layout with Add Transaction stacked above Transactions below the calendar
 - Data persistence with SQLite database (Docker) or browser storage
 
 ## Run
@@ -103,16 +104,17 @@ Open `index.html` directly in your browser for a basic offline experience (no pe
   - **Delete All Data**: Permanently deletes all accounts, transactions, and settings (requires typing "DELETE ALL" to confirm)
 
 ### Transactions
-1. Add transactions using date, payee, description, notes, amount, color, recurrence, and optional recurrence end date.
-   - Positive amount = income
-   - Negative amount = expense
-   - Payee is optional (e.g., Walmart, Employer, Landlord)
+1. Add transactions using date, payee / description, description, notes, amount, type, color, recurrence, and optional recurrence end date.
+   - Select **Expense** or **Income** from the Type dropdown.
+   - Enter the amount as a positive value and the app applies the correct sign automatically.
+   - Payee / Description is optional (e.g., Walmart, Employer, Landlord)
    - Notes is optional for additional memo or details
    - Color is optional and defaults to blue; edit anytime in the transaction edit modal.
    - Click a calendar day to prefill the transaction date quickly.
    - Select recurrence frequency: one-time, daily, weekly, bi-weekly, monthly, quarterly, or yearly.
    - For recurring entries, you can set **Recurrence End Date** to stop the series automatically.
    - Recurring transactions automatically appear on future dates based on the selected frequency.
+   - The Type dropdown is color-coded: Expense is red and Income is green.
    - Date, Description, and Amount show inline validation hints when required values are missing (Amount also blocks zero).
 
 2. **Transfers Between Accounts**:
@@ -126,6 +128,7 @@ Open `index.html` directly in your browser for a basic offline experience (no pe
 3. Move between months with arrow buttons.
 4. Review daily and balance totals directly in the calendar.
 5. Click on a day to view all transactions for that specific date (including recurring instances).
+   - The selected day turns white when it is not today.
 6. Use the **Negative Balance Warning** summary box (next to End of Year) to jump directly to the first day balance drops below zero.
 
 ### Graphs & Analysis
@@ -157,8 +160,13 @@ Open `index.html` directly in your browser for a basic offline experience (no pe
    - Lists current transactions for the selected day, including recurring occurrences
 
 ### Layout
-- The **Add Transaction** and **Transactions** windows are shown side by side below the calendar for a compact working area.
+- The **Add Transaction** window is shown above the **Transactions** window below the calendar.
 - On smaller screens, these windows collapse into a single-column stacked layout.
+
+## Release Notes
+
+- See [CHANGELOG.md](CHANGELOG.md) for the detailed project changelog.
+- See [WHATS_NEW.md](WHATS_NEW.md) for a user-facing summary of recent improvements.
 
 ### Import & Export
 - Export transactions with **Export CSV**.
