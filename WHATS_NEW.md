@@ -1,6 +1,13 @@
 # What's New
 
-## Latest Updates (v1.2.0)
+## Latest Updates (v1.3.0)
+
+**Maintenance Release:**
+- Updated the app release version to 1.3.0.
+- Synced Docker, Compose, and Portainer tags with the new release version.
+- Refreshed static asset version strings so deployments pick up the latest UI files.
+
+## Previous Feature Updates (v1.2.0)
 
 **Account Management:**
 - Assign custom colors to accounts by clicking the 🎨 button - choose from 10 preset colors or no color.
