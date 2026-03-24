@@ -2087,6 +2087,20 @@ function toDateKey(date) {
   return `${year}-${month}-${day}`;
 }
 
+function getDaysInMonth(year, monthIndex) {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+function addMonthsClamped(baseDate, monthsToAdd, preferredDay) {
+  const source = new Date(baseDate);
+  const targetMonthIndex = source.getMonth() + monthsToAdd;
+  const targetYear = source.getFullYear() + Math.floor(targetMonthIndex / 12);
+  const normalizedMonth = ((targetMonthIndex % 12) + 12) % 12;
+  const day = Number.isInteger(preferredDay) ? preferredDay : source.getDate();
+  const clampedDay = Math.min(day, getDaysInMonth(targetYear, normalizedMonth));
+  return new Date(targetYear, normalizedMonth, clampedDay);
+}
+
 function formatCurrency(value) {
   return new Intl.NumberFormat(undefined, {
     style: "currency",
@@ -2095,7 +2109,7 @@ function formatCurrency(value) {
   }).format(value);
 }
 
-function getNextRecurrenceDate(dateStr, recurrence) {
+function getNextRecurrenceDate(dateStr, recurrence, preferredDay = null) {
   const date = new Date(dateStr + 'T00:00:00');
   
   switch (recurrence) {
@@ -2109,14 +2123,11 @@ function getNextRecurrenceDate(dateStr, recurrence) {
       date.setDate(date.getDate() + 14);
       break;
     case 'monthly':
-      date.setMonth(date.getMonth() + 1);
-      break;
+      return toDateKey(addMonthsClamped(date, 1, preferredDay));
     case 'quarterly':
-      date.setMonth(date.getMonth() + 3);
-      break;
+      return toDateKey(addMonthsClamped(date, 3, preferredDay));
     case 'yearly':
-      date.setFullYear(date.getFullYear() + 1);
-      break;
+      return toDateKey(addMonthsClamped(date, 12, preferredDay));
     default:
       return null;
   }
@@ -2131,9 +2142,10 @@ function getLastOccurrenceBeforeDate(startDate, recurrence, targetDate) {
 
   let currentDate = startDate;
   let lastOccurrence = startDate;
+  const anchorDay = new Date(`${startDate}T00:00:00`).getDate();
 
   while (true) {
-    const nextDate = getNextRecurrenceDate(currentDate, recurrence);
+    const nextDate = getNextRecurrenceDate(currentDate, recurrence, anchorDay);
     if (!nextDate || nextDate >= targetDate) {
       break;
     }
@@ -2161,10 +2173,11 @@ function expandRecurringTransactions(startDate, endDate) {
       const excludedDates = new Set(txn.excludedDates || []);
       const recurrenceEndDate = txn.recurrenceEndDate;
       let currentDate = txn.date;
+      const anchorDay = new Date(`${txn.date}T00:00:00`).getDate();
       
       // Generate recurring instances
       while (true) {
-        const nextDate = getNextRecurrenceDate(currentDate, txn.recurrence);
+        const nextDate = getNextRecurrenceDate(currentDate, txn.recurrence, anchorDay);
         if (!nextDate || nextDate > endKey) break;
         
         // Stop if we've reached the recurrence end date

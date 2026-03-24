@@ -251,6 +251,20 @@ function dbAll(sql, params = []) {
   });
 }
 
+function getDaysInMonth(year, monthIndex) {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+function addMonthsClamped(baseDate, monthsToAdd, preferredDay) {
+  const source = new Date(baseDate);
+  const targetMonthIndex = source.getMonth() + monthsToAdd;
+  const targetYear = source.getFullYear() + Math.floor(targetMonthIndex / 12);
+  const normalizedMonth = ((targetMonthIndex % 12) + 12) % 12;
+  const day = Number.isInteger(preferredDay) ? preferredDay : source.getDate();
+  const clampedDay = Math.min(day, getDaysInMonth(targetYear, normalizedMonth));
+  return new Date(targetYear, normalizedMonth, clampedDay);
+}
+
 // Helper function to expand recurring transactions
 function expandRecurringTransactions(transactions, months = 12) {
   const expanded = [];
@@ -288,6 +302,7 @@ function expandRecurringTransactions(transactions, months = 12) {
       const excludedDates = new Set(txn.excludedDates || []);
       const recurrenceEndDate =txn.recurrenceEndDate ? new Date(`${txn.recurrenceEndDate}T00:00:00`) : null;
       let currentDate = new Date(startDate);
+      const anchorDay = startDate.getDate();
       let safetyCounter = 0;
 
       // Generate instances up to endDate
@@ -306,13 +321,13 @@ function expandRecurringTransactions(transactions, months = 12) {
             nextDate.setDate(nextDate.getDate() + 14);
             break;
           case 'monthly':
-            nextDate.setMonth(nextDate.getMonth() + 1);
+            nextDate.setTime(addMonthsClamped(nextDate, 1, anchorDay).getTime());
             break;
           case 'quarterly':
-            nextDate.setMonth(nextDate.getMonth() + 3);
+            nextDate.setTime(addMonthsClamped(nextDate, 3, anchorDay).getTime());
             break;
           case 'yearly':
-            nextDate.setFullYear(nextDate.getFullYear() + 1);
+            nextDate.setTime(addMonthsClamped(nextDate, 12, anchorDay).getTime());
             break;
           default:
             break;
