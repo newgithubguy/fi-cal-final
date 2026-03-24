@@ -134,6 +134,12 @@ function initializeDatabase() {
       }
     });
 
+    db.run('ALTER TABLE accounts ADD COLUMN color TEXT', (err) => {
+      if (err && !String(err.message || '').includes('duplicate column name')) {
+        console.error('Error adding color column to accounts:', err);
+      }
+    });
+
     // Create active account table (per user)
     db.run(`
       CREATE TABLE IF NOT EXISTS active_account (
@@ -170,6 +176,11 @@ async function migrateLegacySchema() {
   if (!accountColumnNames.has('user_id')) {
     await dbRun('ALTER TABLE accounts ADD COLUMN user_id TEXT');
     console.log('Migration: added accounts.user_id');
+  }
+
+  if (!accountColumnNames.has('color')) {
+    await dbRun('ALTER TABLE accounts ADD COLUMN color TEXT');
+    console.log('Migration: added accounts.color');
   }
 
   const transactionsColumns = await dbAll('PRAGMA table_info(transactions)');

@@ -458,10 +458,17 @@ if (logoutBtn) {
 
 // Settings button and Delete All modal
 const settingsBtn = document.getElementById("settingsBtn");
+const managePayeesBtn = document.getElementById("managePayeesBtn");
 const deleteAllDataModal = document.getElementById("deleteAllDataModal");
 const deleteAllCancel = document.getElementById("deleteAllCancel");
 const deleteAllConfirm = document.getElementById("deleteAllConfirm");
 const deleteAllConfirmation = document.getElementById("deleteAllConfirmation");
+
+if (managePayeesBtn) {
+  managePayeesBtn.addEventListener("click", () => {
+    openManagePayeesDescriptionsModal();
+  });
+}
 
 if (settingsBtn) {
   settingsBtn.addEventListener("click", () => {
@@ -493,6 +500,162 @@ if (deleteAllConfirm) {
       deleteAllDataModal.setAttribute("aria-hidden", "true");
     }
   });
+}
+
+// Manage Payees/Descriptions modal
+const managePayeesDescriptionsModal = document.getElementById("managePayeesDescriptionsModal");
+const payeesTabBtn = document.getElementById("payeesTabBtn");
+const descriptionsTabBtn = document.getElementById("descriptionsTabBtn");
+const payeesList = document.getElementById("payeesList");
+const descriptionsList = document.getElementById("descriptionsList");
+const payeesEmpty = document.getElementById("payeesEmpty");
+const descriptionsEmpty = document.getElementById("descriptionsEmpty");
+const closeManageModal = document.getElementById("closeManageModal");
+
+if (payeesTabBtn) {
+  payeesTabBtn.addEventListener("click", () => {
+    switchManageTab("payees");
+  });
+}
+
+if (descriptionsTabBtn) {
+  descriptionsTabBtn.addEventListener("click", () => {
+    switchManageTab("descriptions");
+  });
+}
+
+if (closeManageModal) {
+  closeManageModal.addEventListener("click", () => {
+    managePayeesDescriptionsModal.setAttribute("hidden", "");
+    managePayeesDescriptionsModal.setAttribute("aria-hidden", "true");
+  });
+}
+
+function switchManageTab(tab) {
+  const payeesTab = document.getElementById("payeesTab");
+  const descriptionsTab = document.getElementById("descriptionsTab");
+  
+  if (tab === "payees") {
+    payeesTab.classList.add("active");
+    descriptionsTab.classList.remove("active");
+    payeesTabBtn.classList.add("active");
+    descriptionsTabBtn.classList.remove("active");
+    renderPayeesList();
+  } else {
+    descriptionsTab.classList.add("active");
+    payeesTab.classList.remove("active");
+    descriptionsTabBtn.classList.add("active");
+    payeesTabBtn.classList.remove("active");
+    renderDescriptionsList();
+  }
+}
+
+function openManagePayeesDescriptionsModal() {
+  managePayeesDescriptionsModal.removeAttribute("hidden");
+  managePayeesDescriptionsModal.setAttribute("aria-hidden", "false");
+  switchManageTab("payees");
+}
+
+function renderPayeesList() {
+  payeesList.innerHTML = "";
+  
+  if (payeeHistory.length === 0) {
+    payeesEmpty.style.display = "block";
+    return;
+  }
+  
+  payeesEmpty.style.display = "none";
+  
+  payeeHistory.forEach((payee, index) => {
+    const li = document.createElement("li");
+    li.className = "manage-item";
+    li.innerHTML = `
+      <span class="manage-item-text">${payee}</span>
+      <div class="manage-item-actions">
+        <button class="manage-edit-btn" title="Edit">✎</button>
+        <button class="manage-delete-btn" title="Delete">×</button>
+      </div>
+    `;
+    
+    const editBtn = li.querySelector(".manage-edit-btn");
+    const deleteBtn = li.querySelector(".manage-delete-btn");
+    
+    editBtn.onclick = () => editPayee(index);
+    deleteBtn.onclick = () => deletePayee(index);
+    
+    payeesList.appendChild(li);
+  });
+}
+
+function renderDescriptionsList() {
+  descriptionsList.innerHTML = "";
+  
+  if (descriptionHistory.length === 0) {
+    descriptionsEmpty.style.display = "block";
+    return;
+  }
+  
+  descriptionsEmpty.style.display = "none";
+  
+  descriptionHistory.forEach((description, index) => {
+    const li = document.createElement("li");
+    li.className = "manage-item";
+    li.innerHTML = `
+      <span class="manage-item-text">${description}</span>
+      <div class="manage-item-actions">
+        <button class="manage-edit-btn" title="Edit">✎</button>
+        <button class="manage-delete-btn" title="Delete">×</button>
+      </div>
+    `;
+    
+    const editBtn = li.querySelector(".manage-edit-btn");
+    const deleteBtn = li.querySelector(".manage-delete-btn");
+    
+    editBtn.onclick = () => editDescription(index);
+    deleteBtn.onclick = () => deleteDescription(index);
+    
+    descriptionsList.appendChild(li);
+  });
+}
+
+function editPayee(index) {
+  const currentPayee = payeeHistory[index];
+  const newPayee = prompt("Edit payee:", currentPayee);
+  
+  if (newPayee !== null && newPayee.trim()) {
+    const trimmed = newPayee.trim();
+    payeeHistory[index] = trimmed;
+    saveEntryHistories();
+    renderPayeesList();
+  }
+}
+
+function deletePayee(index) {
+  if (confirm(`Delete "${payeeHistory[index]}"?`)) {
+    payeeHistory.splice(index, 1);
+    saveEntryHistories();
+    renderPayeesList();
+  }
+}
+
+function editDescription(index) {
+  const currentDescription = descriptionHistory[index];
+  const newDescription = prompt("Edit description:", currentDescription);
+  
+  if (newDescription !== null && newDescription.trim()) {
+    const trimmed = newDescription.trim();
+    descriptionHistory[index] = trimmed;
+    saveEntryHistories();
+    renderDescriptionsList();
+  }
+}
+
+function deleteDescription(index) {
+  if (confirm(`Delete "${descriptionHistory[index]}"?`)) {
+    descriptionHistory.splice(index, 1);
+    saveEntryHistories();
+    renderDescriptionsList();
+  }
 }
 
 // Recurring transaction deletion modal
@@ -2335,6 +2498,14 @@ function renderAccounts() {
       li.classList.add('active');
     }
     
+    // Add account color indicator
+    if (account.color) {
+      const colorIndicator = document.createElement('div');
+      colorIndicator.className = 'account-color-indicator';
+      colorIndicator.style.backgroundColor = account.color;
+      li.appendChild(colorIndicator);
+    }
+    
     const nameSpan = document.createElement('span');
     nameSpan.className = 'account-name';
     nameSpan.textContent = account.name;
@@ -2348,8 +2519,18 @@ function renderAccounts() {
       renameAccount(account.id);
     };
     
+    const colorBtn = document.createElement('button');
+    colorBtn.className = 'account-color-btn';
+    colorBtn.textContent = '🎨';
+    colorBtn.title = 'Change account color';
+    colorBtn.onclick = (e) => {
+      e.stopPropagation();
+      openAccountColorPicker(account.id);
+    };
+    
     li.appendChild(nameSpan);
     li.appendChild(renameBtn);
+    li.appendChild(colorBtn);
     
     // Show "Set as Primary" button for non-primary accounts
     if (index > 0) {
@@ -2413,6 +2594,68 @@ function renameAccount(accountId) {
   account.name = trimmedName;
   saveAccounts();
   render();
+}
+
+function openAccountColorPicker(accountId) {
+  const account = accounts.find(acc => acc.id === accountId);
+  if (!account) return;
+
+  // Color palette options
+  const colors = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+    '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#06b6d4'
+  ];
+
+  // Create a simple color picker modal
+  const modal = document.createElement('div');
+  modal.className = 'color-picker-modal';
+  modal.innerHTML = `
+    <div class="color-picker-content">
+      <h3>Choose Account Color</h3>
+      <div class="color-palette">
+        ${colors.map(color => `
+          <button type="button" class="color-option" style="background-color: ${color}" 
+            data-color="${color}" title="${color}"></button>
+        `).join('')}
+      </div>
+      <div class="color-picker-actions">
+        <button id="clearColorBtn" type="button" class="btn-secondary">No Color</button>
+        <button id="closeColorPickerBtn" type="button" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Handle color selection
+  modal.querySelectorAll('.color-option').forEach(btn => {
+    btn.onclick = () => {
+      account.color = btn.dataset.color;
+      saveAccounts();
+      renderAccounts();
+      document.body.removeChild(modal);
+    };
+  });
+  
+  // Handle clear color
+  modal.querySelector('#clearColorBtn').onclick = () => {
+    account.color = null;
+    saveAccounts();
+    renderAccounts();
+    document.body.removeChild(modal);
+  };
+  
+  // Handle close
+  modal.querySelector('#closeColorPickerBtn').onclick = () => {
+    document.body.removeChild(modal);
+  };
+  
+  // Close on background click
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  };
 }
 
 function addAccount() {

@@ -13,6 +13,7 @@
     <div class="accounts-header">
       <h2>Accounts</h2>
       <button id="addAccountBtn" type="button" class="add-account-btn" title="Add new account">+</button>
+      <button id="managePayeesBtn" type="button" class="manage-payees-btn" title="Manage payees and descriptions">📝</button>
       <button id="settingsBtn" type="button" class="settings-btn" title="Settings">⚙</button>
     </div>
     <ul id="accountsList" class="accounts-list"></ul>
@@ -416,6 +417,31 @@
         <button id="editAllOccurrencesBtn" type="button" style="background-color: #2196f3; color: white;">Apply to All Occurrences</button>
         <button id="editThisOnlyBtn" type="button" style="background-color: #ff9800; color: white;">Apply to This Occurrence Only</button>
         <button id="editRecurringCancel" type="button">Cancel</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="managePayeesDescriptionsModal" class="modal-backdrop" hidden aria-hidden="true">
+    <section class="modal-card manage-modal" role="dialog" aria-modal="true" aria-labelledby="managePayeesDescriptionsTitle">
+      <h3 id="managePayeesDescriptionsTitle">Manage Payees & Descriptions</h3>
+      
+      <div class="manage-tabs">
+        <button id="payeesTabBtn" class="manage-tab-btn active" data-tab="payees">Payees</button>
+        <button id="descriptionsTabBtn" class="manage-tab-btn" data-tab="descriptions">Descriptions</button>
+      </div>
+
+      <div id="payeesTab" class="manage-tab active">
+        <ul id="payeesList" class="manage-items-list"></ul>
+        <p id="payeesEmpty" class="manage-empty">No payees yet.</p>
+      </div>
+
+      <div id="descriptionsTab" class="manage-tab">
+        <ul id="descriptionsList" class="manage-items-list"></ul>
+        <p id="descriptionsEmpty" class="manage-empty">No descriptions yet.</p>
+      </div>
+
+      <div class="modal-actions">
+        <button id="closeManageModal" type="button" class="btn-secondary">Close</button>
       </div>
     </section>
   </div>
