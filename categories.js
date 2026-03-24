@@ -48,7 +48,7 @@ function normalizeColor(value) {
 
 async function loadAccountsFromAPI() {
   try {
-    const response = await fetch(`${API_BASE_URL}/accounts`);
+    const response = await fetch(`${API_BASE_URL}/accounts`, { credentials: 'include' });
     if (!response.ok) {
       throw new Error('Failed to load accounts');
     }
@@ -65,7 +65,7 @@ async function loadAccountsFromAPI() {
 
 async function loadActiveAccountIdFromAPI() {
   try {
-    const response = await fetch(`${API_BASE_URL}/active-account`);
+    const response = await fetch(`${API_BASE_URL}/active-account`, { credentials: 'include' });
     if (!response.ok) {
       throw new Error('Failed to load active account');
     }
@@ -100,9 +100,44 @@ function formatCurrency(value) {
   }).format(value);
 }
 
-function getNextRecurrenceDate(dateStr, recurrence) {
+function atStartOfDay(date) {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+}
+
+function getRangeDates(days) {
+  const endDate = atStartOfDay(new Date());
+  const startDate = new Date(endDate);
+
+  // "Last Year" should represent a true year-back window, not a fixed 365-day slice.
+  if (days === 365) {
+    startDate.setFullYear(startDate.getFullYear() - 1);
+    return { startDate, endDate };
+  }
+
+  startDate.setDate(startDate.getDate() - (days - 1));
+  return { startDate, endDate };
+}
+
+function getDaysInMonth(year, monthIndex) {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+function addMonthsClamped(baseDate, monthsToAdd, preferredDay) {
+  const result = new Date(baseDate);
+  const targetMonth = result.getMonth() + monthsToAdd;
+  const targetYear = result.getFullYear() + Math.floor(targetMonth / 12);
+  const normalizedMonth = ((targetMonth % 12) + 12) % 12;
+  const maxDay = getDaysInMonth(targetYear, normalizedMonth);
+  result.setFullYear(targetYear, normalizedMonth, Math.min(preferredDay, maxDay));
+  return result;
+}
+
+function getNextRecurrenceDate(dateStr, recurrence, preferredDay = null) {
   const date = new Date(dateStr + 'T00:00:00');
-  
+  const anchorDay = preferredDay !== null ? preferredDay : date.getDate();
+
   switch (recurrence) {
     case 'daily':
       date.setDate(date.getDate() + 1);
@@ -114,18 +149,21 @@ function getNextRecurrenceDate(dateStr, recurrence) {
       date.setDate(date.getDate() + 14);
       break;
     case 'monthly':
-      date.setMonth(date.getMonth() + 1);
+      date.setTime(addMonthsClamped(date, 1, anchorDay).getTime());
       break;
     case 'quarterly':
-      date.setMonth(date.getMonth() + 3);
+      date.setTime(addMonthsClamped(date, 3, anchorDay).getTime());
       break;
-    case 'yearly':
-      date.setFullYear(date.getFullYear() + 1);
+    case 'yearly': {
+      const yr = date.getFullYear() + 1;
+      const mo = date.getMonth();
+      date.setFullYear(yr, mo, Math.min(anchorDay, getDaysInMonth(yr, mo)));
       break;
+    }
     default:
       return null;
   }
-  
+
   return toDateKey(date);
 }
 
@@ -145,14 +183,15 @@ function expandRecurringTransactions(startDate, endDate) {
     
     // If it's recurring, generate instances
     if (txn.recurrence && txn.recurrence !== 'one-time') {
+      const anchorDay = new Date(txn.date + 'T00:00:00').getDate();
       let currentDate = txn.date;
-      
+
       // Generate recurring instances
       while (true) {
-        const nextDate = getNextRecurrenceDate(currentDate, txn.recurrence);
+        const nextDate = getNextRecurrenceDate(currentDate, txn.recurrence, anchorDay);
         if (!nextDate || nextDate > endKey) break;
         if (recurrenceEndDate && nextDate > recurrenceEndDate) break;
-        
+
         if (nextDate >= startKey && !excludedDates.has(nextDate)) {
           expanded.push({
             ...txn,
@@ -162,7 +201,7 @@ function expandRecurringTransactions(startDate, endDate) {
             originalId: txn.id,
           });
         }
-        
+
         currentDate = nextDate;
       }
     }
@@ -194,10 +233,8 @@ function selectCategoryColorsByAmount(categoryColorWeights) {
 }
 
 function prepareCategoryData(days) {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
-  
+  const { startDate, endDate } = getRangeDates(days);
+
   const allTransactions = expandRecurringTransactions(startDate, endDate);
   
   const expensesByCategory = new Map();
