@@ -783,16 +783,17 @@ body {
 }
 
 .form-card {
-  padding: 12px;
+  padding: 10px;
 }
 
 .form-card h3 {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
+  font-size: 1.1rem;
 }
 
 #transactionForm {
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
   align-items: start;
 }
 
@@ -801,15 +802,15 @@ body {
 }
 
 #transactionForm .notes-field {
-  grid-column: span 4;
+  grid-column: span 3;
 }
 
 #transactionForm textarea {
-  min-height: 44px;
+  min-height: 38px;
 }
 
 #transactionForm .transfer-section {
-  grid-column: span 4;
+  grid-column: span 5;
   padding: 8px;
   gap: 8px;
 }
@@ -832,13 +833,13 @@ body {
 .transaction-form label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 0.88rem;
+  gap: 2px;
+  font-size: 0.85rem;
 }
 
 .field-hint {
-  min-height: 1rem;
-  font-size: 0.78rem;
+  min-height: 0.75rem;
+  font-size: 0.75rem;
   color: var(--bad);
   visibility: hidden;
 }
@@ -857,9 +858,9 @@ body {
 .transaction-form button,
 .list-header button {
   border: 1px solid var(--border);
-  border-radius: 8px;
-  min-height: 36px;
-  padding: 8px 10px;
+  border-radius: 6px;
+  min-height: 32px;
+  padding: 6px 8px;
   font: inherit;
 }
 
@@ -916,14 +917,9 @@ body {
 }
 
 .transfer-section {
-  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-border);
-  border-radius: 8px;
+  gap: 6px;
 }
 
 .checkbox-label {
