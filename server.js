@@ -695,10 +695,15 @@ app.get('/api/entry-histories/:accountId', requireAuth, async (req, res) => {
       'SELECT entries FROM entry_histories WHERE key = ? AND account_id = ?',
       [`description-${accountId}`, accountId]
     );
+    const amountResult = await dbGet(
+      'SELECT entries FROM entry_histories WHERE key = ? AND account_id = ?',
+      [`amount-${accountId}`, accountId]
+    );
     
     res.json({
       payees: payeeResult ? JSON.parse(payeeResult.entries) : [],
-      descriptions: descriptionResult ? JSON.parse(descriptionResult.entries) : []
+      descriptions: descriptionResult ? JSON.parse(descriptionResult.entries) : [],
+      amounts: amountResult ? JSON.parse(amountResult.entries) : []
     });
   } catch (error) {
     console.error('Error fetching entry histories:', error);
@@ -717,7 +722,7 @@ app.post('/api/entry-histories/:accountId', requireAuth, async (req, res) => {
     if (!account) {
       return res.status(403).json({ error: 'Account not found or access denied' });
     }
-    const { payees, descriptions } = req.body;
+    const { payees, descriptions, amounts } = req.body;
     
     await dbRun(
       'INSERT OR REPLACE INTO entry_histories (key, account_id, entries) VALUES (?, ?, ?)',
@@ -727,6 +732,11 @@ app.post('/api/entry-histories/:accountId', requireAuth, async (req, res) => {
     await dbRun(
       'INSERT OR REPLACE INTO entry_histories (key, account_id, entries) VALUES (?, ?, ?)',
       [`description-${accountId}`, accountId, JSON.stringify(descriptions || [])]
+    );
+
+    await dbRun(
+      'INSERT OR REPLACE INTO entry_histories (key, account_id, entries) VALUES (?, ?, ?)',
+      [`amount-${accountId}`, accountId, JSON.stringify(amounts || [])]
     );
     
     res.json({ success: true });

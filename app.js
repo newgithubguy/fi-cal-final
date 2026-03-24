@@ -131,6 +131,7 @@ let activeAccountId = null;
 let transactions = [];
 let payeeHistory = [];
 let descriptionHistory = [];
+let amountHistory = [];
 let manualTransactionsNotepad = {};
 let accountQuickNotes = {};
 const HISTORY_MAX_ITEMS = 100;
@@ -1395,6 +1396,7 @@ transactionForm.addEventListener("submit", (event) => {
   // Track payee and description in history
   if (payee) payeeHistory = addToHistory(payee, payeeHistory);
   if (description) descriptionHistory = addToHistory(description, descriptionHistory);
+  if (amountMagnitude > 0) amountHistory = addToHistory(formatAmountForHistory(amountMagnitude), amountHistory);
   saveEntryHistories();
   recordManualTransactionForNotepad(newTransaction);
 
@@ -1590,10 +1592,12 @@ async function loadEntryHistories() {
     const data = await response.json();
     payeeHistory = data.payees || [];
     descriptionHistory = data.descriptions || [];
+    amountHistory = data.amounts || [];
   } catch (error) {
     console.error('Error loading entry histories:', error);
     payeeHistory = [];
     descriptionHistory = [];
+    amountHistory = [];
   }
 }
 
@@ -1603,7 +1607,7 @@ async function saveEntryHistories() {
     const response = await fetch(`${API_BASE_URL}/entry-histories/${activeAccountId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payees: payeeHistory, descriptions: descriptionHistory }),
+      body: JSON.stringify({ payees: payeeHistory, descriptions: descriptionHistory, amounts: amountHistory }),
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to save entry histories');
@@ -1620,6 +1624,14 @@ function addToHistory(value, historyArray, maxItems = HISTORY_MAX_ITEMS) {
   return [trimmed, ...filtered].slice(0, maxItems);
 }
 
+function formatAmountForHistory(value) {
+  const amount = Math.abs(Number(value));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return '';
+  }
+  return amount.toFixed(2);
+}
+
 function renderSuggestionsForInput(inputElement, historyArray) {
   const dataListId = inputElement.getAttribute('list');
   if (!dataListId) return;
@@ -1629,11 +1641,11 @@ function renderSuggestionsForInput(inputElement, historyArray) {
   
   const value = inputElement.value.trim().toLowerCase();
   const filtered = historyArray.filter(item => 
-    !value || item.toLowerCase().includes(value)
+    !value || String(item).toLowerCase().includes(value)
   ).slice(0, 10);
   
   dataList.innerHTML = filtered
-    .map(item => `<option value="${item}"></option>`)
+    .map(item => `<option value="${String(item)}"></option>`)
     .join('');
 }
 
@@ -1650,6 +1662,10 @@ if (payeeInput) {
   payeeInput.addEventListener('input', () => {
     renderSuggestionsForInput(payeeInput, payeeHistory);
   });
+
+  payeeInput.addEventListener('focus', () => {
+    renderSuggestionsForInput(payeeInput, payeeHistory);
+  });
 }
 
 if (descriptionInput) {
@@ -1664,6 +1680,27 @@ if (descriptionInput) {
   descriptionInput.addEventListener('input', () => {
     renderSuggestionsForInput(descriptionInput, descriptionHistory);
   });
+
+  descriptionInput.addEventListener('focus', () => {
+    renderSuggestionsForInput(descriptionInput, descriptionHistory);
+  });
+}
+
+if (amountInput) {
+  if (!document.getElementById('amountSuggestions')) {
+    const dataList = document.createElement('datalist');
+    dataList.id = 'amountSuggestions';
+    document.body.appendChild(dataList);
+    amountInput.setAttribute('list', 'amountSuggestions');
+  }
+
+  amountInput.addEventListener('input', () => {
+    renderSuggestionsForInput(amountInput, amountHistory);
+  });
+
+  amountInput.addEventListener('focus', () => {
+    renderSuggestionsForInput(amountInput, amountHistory);
+  });
 }
 
 if (editPayeeInput) {
@@ -1675,6 +1712,10 @@ if (editPayeeInput) {
   }
   
   editPayeeInput.addEventListener('input', () => {
+    renderSuggestionsForInput(editPayeeInput, payeeHistory);
+  });
+
+  editPayeeInput.addEventListener('focus', () => {
     renderSuggestionsForInput(editPayeeInput, payeeHistory);
   });
 }
@@ -1689,6 +1730,27 @@ if (editDescriptionInput) {
   
   editDescriptionInput.addEventListener('input', () => {
     renderSuggestionsForInput(editDescriptionInput, descriptionHistory);
+  });
+
+  editDescriptionInput.addEventListener('focus', () => {
+    renderSuggestionsForInput(editDescriptionInput, descriptionHistory);
+  });
+}
+
+if (editAmountInput) {
+  if (!document.getElementById('editAmountSuggestions')) {
+    const dataList = document.createElement('datalist');
+    dataList.id = 'editAmountSuggestions';
+    document.body.appendChild(dataList);
+    editAmountInput.setAttribute('list', 'editAmountSuggestions');
+  }
+
+  editAmountInput.addEventListener('input', () => {
+    renderSuggestionsForInput(editAmountInput, amountHistory);
+  });
+
+  editAmountInput.addEventListener('focus', () => {
+    renderSuggestionsForInput(editAmountInput, amountHistory);
   });
 }
 
@@ -2751,6 +2813,7 @@ async function deleteAllData() {
     transactions = [];
     payeeHistory = [];
     descriptionHistory = [];
+    amountHistory = [];
     manualTransactionsNotepad = {};
     accountQuickNotes = {};
     saveSidebarNotepads();
@@ -3506,6 +3569,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
   // Track payee and description in history
   if (editData.payee) payeeHistory = addToHistory(editData.payee, payeeHistory);
   if (editData.description) descriptionHistory = addToHistory(editData.description, descriptionHistory);
+  if (Math.abs(editData.amount) > 0) amountHistory = addToHistory(formatAmountForHistory(editData.amount), amountHistory);
   saveEntryHistories();
   
   commitTransactions(transactions);
