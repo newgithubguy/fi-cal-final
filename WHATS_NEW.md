@@ -1,6 +1,13 @@
 # What's New
 
-## Latest Updates (v1.3.0)
+## Latest Updates (v1.3.2)
+
+**Maintenance Release:**
+- Updated the app release version to 1.3.2.
+- Synced Docker, Compose, and Portainer tags with the new release version.
+- Refreshed static asset version strings so deployments pick up the latest UI files.
+
+## Previous Updates (v1.3.0)
 
 **Maintenance Release:**
 - Updated the app release version to 1.3.0.

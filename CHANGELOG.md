@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-03-24 (v1.3.2)
+
+### Changed
+- Bumped application version metadata from 1.3.0 to 1.3.2.
+- Updated Docker, Compose, and Portainer version tags for the 1.3.2 release.
+- Refreshed static asset cache-busting query strings for the 1.3.2 release.
+
 ## 2026-03-24 (v1.3.0)
 
 ### Changed
