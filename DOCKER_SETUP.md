@@ -55,4 +55,11 @@ Then hard refresh your browser:
 - Windows/Linux: Ctrl + Shift + R or Ctrl + F5
 - Mac: Cmd + Shift + R
 
-Recent UI updates include keyboard calculator input, highlighted-day sidebar transactions, and compact side-by-side workspace panels below the calendar.
+## Recent Updates
+
+- Account color customization: Assign colors to accounts for better organization
+- Payee & Description manager: Edit or delete saved payees and descriptions
+- Keyboard calculator input support
+- Highlighted-day sidebar transactions
+- Compact side-by-side workspace panels below the calendar
+- Income/Expense type selector with color-coded dropdown

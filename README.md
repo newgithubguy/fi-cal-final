@@ -4,6 +4,7 @@ Mobile-friendly version of the Finance Calendar app, based on the original proje
 
 Simple browser-based finance tracker with:
 - **Multi-account support** - Create separate calendars for different accounts
+- **Account color customization** - Assign custom colors to accounts for visual organization
 - **Linked transfers** - Transfer money between accounts (creates matching transactions)
 - Calendar view with daily totals and running balance
 - **Income vs Expenses graph** - Visualize financial trends over time
@@ -12,6 +13,7 @@ Simple browser-based finance tracker with:
 - **Recurring end date support** - Optionally stop recurring series on a selected date
 - **Transaction color tags** - Assign a color to each transaction and reuse those colors in category charts
 - **Income / Expense selector** - Choose transaction type instead of manually entering negative amounts
+- **Payee & Description management** - Edit or delete saved payees and descriptions from a centralized manager
 - CSV import/export with recurring transaction expansion
 - Built-in calculator positioned in the accounts sidebar
 - Keyboard calculator support (top-row numbers and numpad)
@@ -95,9 +97,17 @@ Open `index.html` directly in your browser for a basic offline experience (no pe
 - Click an account name to switch between them
 - Each account has its own separate transaction history
 - Click the **✎ (edit)** button to rename any account
+- Click the **🎨 (color)** button to change an account's color - choose from 10 preset colors or remove the color
 - Click the **⭐ (star)** button on non-primary accounts to make them the primary account (moves them to the top)
 - Click the **×** button to delete accounts (only available for non-primary accounts)
 - The primary account (first account) is protected from deletion and cannot be switched with the "×" button
+
+### Payee & Description Management
+- Click the **📝 (notebook)** icon in the accounts header to manage saved payees and descriptions
+- Switch between **Payees** and **Descriptions** tabs
+- **Edit** any entry by clicking the **✎** button
+- **Delete** any entry by clicking the **×** button
+- Useful for cleaning up or refining your transaction entry history
 
 ### Settings
 - Click the **⚙ (gear)** icon in the accounts header to access app settings

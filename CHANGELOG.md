@@ -1,6 +1,26 @@
 # Changelog
 
-## 2026-03-23
+## 2026-03-23 (v1.2.0)
+
+### Added
+- Added account color customization with 10-color preset palette.
+- Added colored indicator dot on account names in the sidebar.
+- Added **Manage Payees & Descriptions** modal accessible via the 📝 button.
+- Added ability to edit payee entries in the manager.
+- Added ability to delete payee entries from history.
+- Added ability to edit description entries in the manager.
+- Added ability to delete description entries from history.
+- Added tab-based navigation between Payees and Descriptions in the manager.
+- Added `color` column to accounts table with automatic database migration.
+
+### Changed
+- Updated color picker modal with smooth animations and better UX.
+- Improved account button layout to include color picker button.
+
+### Fixed
+- None
+
+## 2026-03-23 (v1.1.1)
 
 ### Added
 - Added an Income / Expense selector to the Add Transaction form.
