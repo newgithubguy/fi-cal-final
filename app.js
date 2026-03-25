@@ -507,10 +507,13 @@ if (deleteAllConfirm) {
 const managePayeesDescriptionsModal = document.getElementById("managePayeesDescriptionsModal");
 const payeesTabBtn = document.getElementById("payeesTabBtn");
 const descriptionsTabBtn = document.getElementById("descriptionsTabBtn");
+const amountsTabBtn = document.getElementById("amountsTabBtn");
 const payeesList = document.getElementById("payeesList");
 const descriptionsList = document.getElementById("descriptionsList");
+const amountsList = document.getElementById("amountsList");
 const payeesEmpty = document.getElementById("payeesEmpty");
 const descriptionsEmpty = document.getElementById("descriptionsEmpty");
+const amountsEmpty = document.getElementById("amountsEmpty");
 const closeManageModal = document.getElementById("closeManageModal");
 
 if (payeesTabBtn) {
@@ -525,6 +528,12 @@ if (descriptionsTabBtn) {
   });
 }
 
+if (amountsTabBtn) {
+  amountsTabBtn.addEventListener("click", () => {
+    switchManageTab("amounts");
+  });
+}
+
 if (closeManageModal) {
   closeManageModal.addEventListener("click", () => {
     managePayeesDescriptionsModal.setAttribute("hidden", "");
@@ -535,20 +544,37 @@ if (closeManageModal) {
 function switchManageTab(tab) {
   const payeesTab = document.getElementById("payeesTab");
   const descriptionsTab = document.getElementById("descriptionsTab");
+  const amountsTab = document.getElementById("amountsTab");
   
   if (tab === "payees") {
     payeesTab.classList.add("active");
     descriptionsTab.classList.remove("active");
+    amountsTab.classList.remove("active");
     payeesTabBtn.classList.add("active");
     descriptionsTabBtn.classList.remove("active");
+    amountsTabBtn.classList.remove("active");
     renderPayeesList();
-  } else {
+    return;
+  }
+
+  if (tab === "descriptions") {
     descriptionsTab.classList.add("active");
     payeesTab.classList.remove("active");
+    amountsTab.classList.remove("active");
     descriptionsTabBtn.classList.add("active");
     payeesTabBtn.classList.remove("active");
+    amountsTabBtn.classList.remove("active");
     renderDescriptionsList();
+    return;
   }
+
+  amountsTab.classList.add("active");
+  payeesTab.classList.remove("active");
+  descriptionsTab.classList.remove("active");
+  amountsTabBtn.classList.add("active");
+  payeesTabBtn.classList.remove("active");
+  descriptionsTabBtn.classList.remove("active");
+  renderAmountsList();
 }
 
 function openManagePayeesDescriptionsModal() {
@@ -619,6 +645,43 @@ function renderDescriptionsList() {
   });
 }
 
+function renderAmountsList() {
+  amountsList.innerHTML = "";
+
+  if (amountHistory.length === 0) {
+    amountsEmpty.style.display = "block";
+    return;
+  }
+
+  amountsEmpty.style.display = "none";
+
+  amountHistory.forEach((amountValue, index) => {
+    const li = document.createElement("li");
+    li.className = "manage-item";
+
+    const numericAmount = Number(amountValue);
+    const displayValue = Number.isFinite(numericAmount)
+      ? formatCurrency(numericAmount)
+      : amountValue;
+
+    li.innerHTML = `
+      <span class="manage-item-text">${displayValue}</span>
+      <div class="manage-item-actions">
+        <button class="manage-edit-btn" title="Edit">✎</button>
+        <button class="manage-delete-btn" title="Delete">×</button>
+      </div>
+    `;
+
+    const editBtn = li.querySelector(".manage-edit-btn");
+    const deleteBtn = li.querySelector(".manage-delete-btn");
+
+    editBtn.onclick = () => editAmountHistoryItem(index);
+    deleteBtn.onclick = () => deleteAmountHistoryItem(index);
+
+    amountsList.appendChild(li);
+  });
+}
+
 function editPayee(index) {
   const currentPayee = payeeHistory[index];
   const newPayee = prompt("Edit payee:", currentPayee);
@@ -656,6 +719,33 @@ function deleteDescription(index) {
     descriptionHistory.splice(index, 1);
     saveEntryHistories();
     renderDescriptionsList();
+  }
+}
+
+function editAmountHistoryItem(index) {
+  const currentAmount = amountHistory[index];
+  const newAmountInput = prompt("Edit amount:", currentAmount);
+
+  if (newAmountInput === null) {
+    return;
+  }
+
+  const parsedAmount = Number(newAmountInput);
+  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    alert("Please enter a valid amount greater than 0.");
+    return;
+  }
+
+  amountHistory[index] = formatAmountForHistory(parsedAmount);
+  saveEntryHistories();
+  renderAmountsList();
+}
+
+function deleteAmountHistoryItem(index) {
+  if (confirm(`Delete amount "${amountHistory[index]}"?`)) {
+    amountHistory.splice(index, 1);
+    saveEntryHistories();
+    renderAmountsList();
   }
 }
 
