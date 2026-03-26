@@ -66,12 +66,19 @@
             </select>
           </label>
         </div>
+        <label>
+          Group by
+          <select id="groupBySelect">
+            <option value="description" selected>Description</option>
+            <option value="merchant">Merchant / Account</option>
+          </select>
+        </label>
       </div>
     </section>
 
     <div class="category-layout">
       <section class="card">
-        <h3>Expenses by Category</h3>
+        <h3 id="expensesHeading">Expenses by Category</h3>
         <div class="chart-container">
           <canvas id="expensesChart"></canvas>
         </div>
@@ -79,7 +86,7 @@
       </section>
 
       <section class="card">
-        <h3>Income by Category</h3>
+        <h3 id="incomeHeading">Income by Category</h3>
         <div class="chart-container">
           <canvas id="incomeChart"></canvas>
         </div>

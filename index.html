@@ -13,7 +13,7 @@
     <div class="accounts-header">
       <h2>Accounts</h2>
       <button id="addAccountBtn" type="button" class="add-account-btn" title="Add new account">+</button>
-      <button id="managePayeesBtn" type="button" class="manage-payees-btn" title="Manage payees, descriptions, and amounts">📝</button>
+      <button id="managePayeesBtn" type="button" class="manage-payees-btn" title="Manage merchants, descriptions, and amounts">📝</button>
       <button id="settingsBtn" type="button" class="settings-btn" title="Settings">⚙</button>
     </div>
     <ul id="accountsList" class="accounts-list"></ul>
@@ -176,7 +176,7 @@
               <span id="dateHint" class="field-hint" aria-live="polite"></span>
             </label>
             <label>
-              Payee / Description
+              Merchant / Account
               <input id="payeeInput" type="text" maxlength="60" placeholder="Walmart, Employer, Landlord..." />
               <span class="field-hint"></span>
             </label>
@@ -299,7 +299,7 @@
           <span id="editDateHint" class="field-hint" aria-live="polite"></span>
         </label>
         <label>
-          Payee / Description
+          Merchant / Account
           <input id="editPayeeInput" type="text" maxlength="60" placeholder="Walmart, Employer, Landlord..." />
         </label>
         <label>
@@ -431,7 +431,7 @@
 
   <div id="managePayeesDescriptionsModal" class="modal-backdrop" hidden aria-hidden="true">
     <section class="modal-card manage-modal" role="dialog" aria-modal="true" aria-labelledby="managePayeesDescriptionsTitle">
-      <h3 id="managePayeesDescriptionsTitle">Manage Payees, Descriptions & Amounts</h3>
+      <h3 id="managePayeesDescriptionsTitle">Manage Merchants, Descriptions & Amounts</h3>
       
       <div class="manage-tabs">
         <button id="payeesTabBtn" class="manage-tab-btn active" data-tab="payees">Payees</button>

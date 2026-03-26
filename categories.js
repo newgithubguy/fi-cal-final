@@ -12,6 +12,9 @@ const netAmountDisplay = document.getElementById("netAmount");
 const refreshDataBtn = document.getElementById("refreshDataBtn");
 const expensesList = document.getElementById("expensesList");
 const incomeList = document.getElementById("incomeList");
+const groupBySelect = document.getElementById("groupBySelect");
+const expensesHeading = document.getElementById("expensesHeading");
+const incomeHeading = document.getElementById("incomeHeading");
 
 let expensesChart = null;
 let incomeChart = null;
@@ -19,6 +22,7 @@ let accounts = [];
 let activeAccountId = null;
 let transactions = [];
 let viewMode = "timeRange";
+let groupBy = "description";
 
 const DEFAULT_EXPENSE_COLORS = [
   '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16',
@@ -245,7 +249,9 @@ function prepareCategoryData(days) {
   let totalExpenses = 0;
   
   for (const txn of allTransactions) {
-    const category = txn.description || 'Uncategorized';
+    const category = groupBy === 'merchant'
+      ? (txn.payee || 'Unknown')
+      : (txn.description || 'Uncategorized');
     const amount = Math.abs(txn.amount);
     const color = normalizeColor(txn.color);
     
@@ -294,7 +300,9 @@ function prepareMonthCategoryData(year, month) {
   let totalExpenses = 0;
   
   for (const txn of allTransactions) {
-    const category = txn.description || 'Uncategorized';
+    const category = groupBy === 'merchant'
+      ? (txn.payee || 'Unknown')
+      : (txn.description || 'Uncategorized');
     const amount = Math.abs(txn.amount);
     const color = normalizeColor(txn.color);
     
@@ -391,6 +399,11 @@ function updateCharts() {
     const month = parseInt(monthSelect.value);
     categoryData = prepareMonthCategoryData(year, month);
   }
+
+  // Update section headings based on group-by selection
+  const groupLabel = groupBy === 'merchant' ? 'Merchant / Account' : 'Category';
+  if (expensesHeading) expensesHeading.textContent = `Expenses by ${groupLabel}`;
+  if (incomeHeading) incomeHeading.textContent = `Income by ${groupLabel}`;
   
   // Update summary stats
   totalIncomeDisplay.textContent = formatCurrency(categoryData.totalIncome);
@@ -512,6 +525,12 @@ function updateCharts() {
 
 // Event listeners
 timeRangeSelect.addEventListener('change', updateCharts);
+
+// Group by select
+groupBySelect.addEventListener('change', () => {
+  groupBy = groupBySelect.value;
+  updateCharts();
+});
 
 // View mode radio buttons
 viewModeRadios.forEach(radio => {
