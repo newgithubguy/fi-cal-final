@@ -6,7 +6,7 @@
   <title>Finance Calendar</title>
   <link rel="icon" type="image/png" href="build/icon.png" />
   <link rel="shortcut icon" href="build/icon.ico" />
-  <link rel="stylesheet" href="styles.css?v=1.3.3" />
+  <link rel="stylesheet" href="styles.css?v=1.3.9" />
 </head>
 <body>
   <aside class="accounts-sidebar">
@@ -98,29 +98,35 @@
 
     <section class="controls card">
       <div class="month-controls">
-        <button id="prevMonth" type="button" class="month-nav-btn" aria-label="Previous month">←</button>
-        <div class="month-selector-group">
-          <label for="yearSelect" class="selector-label">Year</label>
-          <select id="yearSelect"></select>
+        <div class="month-controls-left">
+          <button id="prevMonth" type="button" class="month-nav-btn" aria-label="Previous month">←</button>
+          <div class="month-selector-group">
+            <label for="yearSelect" class="selector-label">Year</label>
+            <select id="yearSelect"></select>
+          </div>
+          <div class="month-selector-group">
+            <label for="monthSelect" class="selector-label">Month</label>
+            <select id="monthSelect">
+              <option value="0">January</option>
+              <option value="1">February</option>
+              <option value="2">March</option>
+              <option value="3">April</option>
+              <option value="4">May</option>
+              <option value="5">June</option>
+              <option value="6">July</option>
+              <option value="7">August</option>
+              <option value="8">September</option>
+              <option value="9">October</option>
+              <option value="10">November</option>
+              <option value="11">December</option>
+            </select>
+          </div>
+          <button id="nextMonth" type="button" class="month-nav-btn" aria-label="Next month">→</button>
         </div>
-        <div class="month-selector-group">
-          <label for="monthSelect" class="selector-label">Month</label>
-          <select id="monthSelect">
-            <option value="0">January</option>
-            <option value="1">February</option>
-            <option value="2">March</option>
-            <option value="3">April</option>
-            <option value="4">May</option>
-            <option value="5">June</option>
-            <option value="6">July</option>
-            <option value="7">August</option>
-            <option value="8">September</option>
-            <option value="9">October</option>
-            <option value="10">November</option>
-            <option value="11">December</option>
-          </select>
+        <div class="stat current-account-inline">
+          <span class="label">Current Account</span>
+          <strong id="currentAccountDisplay">No account selected</strong>
         </div>
-        <button id="nextMonth" type="button" class="month-nav-btn" aria-label="Next month">→</button>
         <div class="top-links-group">
           <a href="graph.html" class="graph-link">📊 Graph</a>
           <a href="categories.html" class="graph-link">📂 Categories</a>
@@ -135,10 +141,6 @@
         <div class="stat stat-month-change">
           <span class="label">Month Change</span>
           <strong id="monthChangeDisplay">$0.00</strong>
-        </div>
-        <div class="stat stat-current-account">
-          <span class="label">Current Account</span>
-          <strong id="currentAccountDisplay">No account selected</strong>
         </div>
         <div class="stat stat-end-month">
           <span class="label">End of Month</span>
@@ -458,6 +460,7 @@
     </section>
   </div>
 
-  <script src="app.js?v=1.3.3"></script>
+  <script src="app.js?v=1.3.9"></script>
 </body>
 </html>
+

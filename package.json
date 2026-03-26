@@ -1,6 +1,6 @@
 {
   "name": "fi-man-mobile",
-  "version": "1.3.3",
+  "version": "1.3.9",
   "description": "Finance Calendar Manager (Mobile Friendly Edition)",
   "main": "server.js",
   "scripts": {
@@ -19,3 +19,4 @@
     "sqlite3": "^5.1.7"
   }
 }
+

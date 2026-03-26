@@ -1,8 +1,8 @@
 FROM node:20-bookworm-slim
 
 # Change CACHE_BUST value to force BuildKit to re-clone from GitHub (bypasses stale git cache)
-ARG CACHE_BUST=20260324-3
-ARG APP_VERSION=1.3.3
+ARG CACHE_BUST=20260326-1
+ARG APP_VERSION=1.3.9
 LABEL org.opencontainers.image.title="fi-cal-final" \
   org.opencontainers.image.version="${APP_VERSION}" \
   org.opencontainers.image.source="https://github.com/newgithubguy/fi-cal-final"
@@ -36,3 +36,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
 
 # Start application
 CMD ["npm", "start"]
+

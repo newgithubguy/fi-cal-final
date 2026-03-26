@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        APP_VERSION: "1.3.3"
+        APP_VERSION: "1.3.9"
     container_name: finance-calendar-mobile
     pull_policy: never
     ports:
@@ -16,10 +16,10 @@ services:
       - NODE_ENV=production
       - DB_PATH=/data/finance.db
       - SESSION_SECRET=change-this-to-random-secret-in-production
-      - APP_VERSION=1.3.3
+      - APP_VERSION=1.3.9
     labels:
       - app.name=fi-cal-final
-      - app.version=1.3.3
+      - app.version=1.3.9
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) process.exit(1)})"]
@@ -31,3 +31,4 @@ services:
 volumes:
   finance-calendar-mobile-data:
     driver: local
+
