@@ -493,6 +493,36 @@ body {
   gap: 12px;
 }
 
+.stat-starting-balance {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.stat-month-change {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.stat-current-account {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.stat-end-month {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.stat-end-year {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+.stat-negative-warning {
+  grid-column: 5;
+  grid-row: 1;
+}
+
 .layout-controls {
   margin-top: 12px;
   display: flex;
@@ -1832,6 +1862,16 @@ body {
 
   .summary-row {
     grid-template-columns: 1fr;
+  }
+
+  .stat-starting-balance,
+  .stat-month-change,
+  .stat-current-account,
+  .stat-end-month,
+  .stat-end-year,
+  .stat-negative-warning {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .calendar-workspace {

@@ -41,6 +41,7 @@ const recurrenceEndDateLabel = document.getElementById("recurrenceEndDateLabel")
 const transactionList = document.getElementById("transactionList");
 const transactionListTitle = document.getElementById("transactionListTitle");
 const monthChangeDisplay = document.getElementById("monthChangeDisplay");
+const currentAccountDisplay = document.getElementById("currentAccountDisplay");
 const endBalanceDisplay = document.getElementById("endBalanceDisplay");
 const endOfYearBalanceDisplay = document.getElementById("endOfYearBalanceDisplay");
 const firstNegativeBalanceBtn = document.getElementById("firstNegativeBalanceBtn");
@@ -2503,6 +2504,10 @@ function renderCalendar() {
 
   startingBalanceDisplay.textContent = formatCurrency(startingBalance);
   monthChangeDisplay.textContent = formatCurrency(monthChange);
+  if (currentAccountDisplay) {
+    const activeAccount = accounts.find((acc) => acc.id === activeAccountId) || accounts[0];
+    currentAccountDisplay.textContent = activeAccount ? activeAccount.name : "No account selected";
+  }
   const endOfMonthBalance = startingBalance + monthChange;
   endBalanceDisplay.textContent = formatCurrency(endOfMonthBalance);
   const endOfYearBalance = getBalanceBefore(`${year + 1}-01-01`);

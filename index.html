@@ -126,23 +126,27 @@
       </div>
 
       <div class="summary-row">
-        <div class="stat">
+        <div class="stat stat-starting-balance">
           <span class="label">Starting Balance</span>
           <strong id="startingBalanceDisplay">$0.00</strong>
         </div>
-        <div class="stat">
+        <div class="stat stat-month-change">
           <span class="label">Month Change</span>
           <strong id="monthChangeDisplay">$0.00</strong>
         </div>
-        <div class="stat">
+        <div class="stat stat-current-account">
+          <span class="label">Current Account</span>
+          <strong id="currentAccountDisplay">No account selected</strong>
+        </div>
+        <div class="stat stat-end-month">
           <span class="label">End of Month</span>
           <strong id="endBalanceDisplay">$0.00</strong>
         </div>
-        <div class="stat">
+        <div class="stat stat-end-year">
           <span class="label">End of Year</span>
           <strong id="endOfYearBalanceDisplay">$0.00</strong>
         </div>
-        <button id="firstNegativeBalanceBtn" type="button" class="stat stat-link is-disabled" aria-disabled="true">
+        <button id="firstNegativeBalanceBtn" type="button" class="stat stat-link stat-negative-warning is-disabled" aria-disabled="true">
           <span class="label">Negative Balance Warning</span>
           <strong id="firstNegativeBalanceDisplay">None</strong>
         </button>
