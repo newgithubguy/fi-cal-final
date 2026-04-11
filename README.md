@@ -27,7 +27,7 @@ Simple browser-based finance tracker with:
 
 From the `fi-man-mobile` folder:
 
-Optional: copy environment defaults and customize image/tag or secret:
+Optional: copy environment defaults and customize version/secret:
 
 ```bash
 cp .env.example .env
@@ -40,16 +40,7 @@ Copy-Item .env.example .env
 ```
 
 ```bash
-docker compose pull
-docker compose up -d
-```
-
-Default image source: `ghcr.io/newgithubguy/fi-cal-final:latest`
-
-If the GHCR image is private, authenticate first:
-
-```bash
-echo YOUR_GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+docker compose up -d --build
 ```
 
 Then open: `http://localhost:8081`
@@ -97,8 +88,7 @@ Requires Docker and Docker Compose.
 
 ```bash
 # Quick start with Docker Compose
-docker compose pull
-docker compose up -d
+docker compose up -d --build
 ```
 
 Access at: `http://localhost:8081` or `http://YOUR_MACHINE_IP:8081`

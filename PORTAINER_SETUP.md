@@ -14,7 +14,6 @@ This guide shows how to deploy the **mobile-friendly** app using Portainer.
 2. Click **Add Stack**
 3. Name it: `finance-calendar-mobile`
 4. Paste the stack content from [portainer-stack.yml](portainer-stack.yml)
-5. If using a private GHCR image, add registry credentials in Portainer for `ghcr.io`
 5. Click **Deploy the stack**
 
 Access the app:
@@ -26,9 +25,12 @@ Access the app:
 ```yaml
 services:
   finance-calendar-mobile:
-    image: ghcr.io/newgithubguy/fi-cal-final:latest
+    build:
+      context: https://github.com/newgithubguy/fi-cal-final.git#main
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: "1.3.10"
     container_name: finance-calendar-mobile
-    pull_policy: always
     ports:
       - "8081:3000"
     volumes:
@@ -55,14 +57,14 @@ volumes:
 ## Updating in Portainer
 
 1. Go to **Stacks** → `finance-calendar-mobile`
-2. Click **Pull and redeploy** (if using Git) or **Update the stack**
+2. Click **Update the stack** (or **Pull and redeploy** if your Portainer shows that action)
 3. If updates still do not appear, rebuild image with no cache from CLI
 
 ### GitHub + Portainer Update Checklist
 
-1. Confirm the stack uses image `ghcr.io/newgithubguy/fi-cal-final:latest`.
-2. Click **Pull and redeploy**.
-3. If updates are still stale, verify Portainer has valid GHCR registry credentials and redeploy.
+1. Confirm the stack uses `build.context: https://github.com/newgithubguy/fi-cal-final.git#main`.
+2. Click **Update the stack** or **Pull and redeploy**.
+3. If updates are still stale, enable a no-cache rebuild and redeploy.
 4. Hard refresh the browser.
 
 Recent UI updates include keyboard calculator input, highlighted-day sidebar transactions, and compact side-by-side workspace panels below the calendar.
