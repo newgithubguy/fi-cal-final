@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Income vs Expenses - Finance Calendar</title>
+  <title>Income, Expenses, and Balance - Finance Calendar</title>
   <link rel="icon" type="image/png" href="build/icon.png" />
   <link rel="shortcut icon" href="build/icon.ico" />
   <link rel="stylesheet" href="styles.css?v=1.3.9" />
@@ -12,8 +12,8 @@
 <body>
   <main class="app">
     <header class="topbar">
-      <h1>Income vs Expenses</h1>
-      <p class="subtitle">Track your financial trends over time</p>
+      <h1>Income, Expenses, and Balance</h1>
+      <p class="subtitle">Track how income and expenses move your balance over time</p>
     </header>
 
     <section class="controls card">
@@ -95,14 +95,22 @@
           <strong id="totalExpenses" class="negative">$0.00</strong>
         </div>
         <div class="stat">
-          <span class="label">Net</span>
+          <span id="netLabel" class="label">Balance Change</span>
           <strong id="netAmount">$0.00</strong>
+        </div>
+        <div class="stat">
+          <span class="label">Starting Balance</span>
+          <strong id="startingBalance">$0.00</strong>
+        </div>
+        <div class="stat">
+          <span id="balanceLabel" class="label">Current Balance</span>
+          <strong id="currentBalance">$0.00</strong>
         </div>
       </div>
     </section>
   </main>
 
-  <script src="graph.js?v=1.3.9"></script>
+  <script src="graph.js?v=1.3.10"></script>
 </body>
 </html>
 

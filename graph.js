@@ -9,7 +9,11 @@ const monthSelectorControls = document.getElementById("monthSelectorControls");
 const chartTypeSelect = document.getElementById("chartType");
 const totalIncomeDisplay = document.getElementById("totalIncome");
 const totalExpensesDisplay = document.getElementById("totalExpenses");
+const netLabelDisplay = document.getElementById("netLabel");
 const netAmountDisplay = document.getElementById("netAmount");
+const startingBalanceDisplay = document.getElementById("startingBalance");
+const balanceLabelDisplay = document.getElementById("balanceLabel");
+const currentBalanceDisplay = document.getElementById("currentBalance");
 const refreshDataBtn = document.getElementById("refreshDataBtn");
 
 let chart = null;
@@ -26,7 +30,11 @@ async function loadAccountsFromAPI() {
     if (!response.ok) {
       throw new Error(`Failed to load accounts (${response.status})`);
     }
-    return await response.json();
+    const loadedAccounts = await response.json();
+    return loadedAccounts.map((account) => ({
+      ...account,
+      transactions: (account.transactions || []).filter((txn) => !txn.isRecurringInstance),
+    }));
   } catch (error) {
     console.error('Error loading accounts:', error);
     return [];
@@ -72,6 +80,39 @@ function formatCurrency(value) {
   }).format(value);
 }
 
+function atStartOfDay(date) {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+}
+
+function getRangeDates(days) {
+  const endDate = atStartOfDay(new Date());
+  const startDate = new Date(endDate);
+
+  if (days === 365) {
+    startDate.setFullYear(startDate.getFullYear() - 1);
+    return { startDate, endDate };
+  }
+
+  startDate.setDate(startDate.getDate() - (days - 1));
+  return { startDate, endDate };
+}
+
+function getDaysInMonth(year, monthIndex) {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+function addMonthsClamped(baseDate, monthsToAdd, preferredDay) {
+  const result = new Date(baseDate);
+  const targetMonth = result.getMonth() + monthsToAdd;
+  const targetYear = result.getFullYear() + Math.floor(targetMonth / 12);
+  const normalizedMonth = ((targetMonth % 12) + 12) % 12;
+  const maxDay = getDaysInMonth(targetYear, normalizedMonth);
+  result.setFullYear(targetYear, normalizedMonth, Math.min(preferredDay, maxDay));
+  return result;
+}
+
 function navigateToCalendarDate(dateKey) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
     return;
@@ -80,9 +121,10 @@ function navigateToCalendarDate(dateKey) {
   window.location.href = `index.html?date=${encodeURIComponent(dateKey)}`;
 }
 
-function getNextRecurrenceDate(dateStr, recurrence) {
+function getNextRecurrenceDate(dateStr, recurrence, preferredDay = null) {
   const date = new Date(dateStr + 'T00:00:00');
-  
+  const anchorDay = preferredDay !== null ? preferredDay : date.getDate();
+
   switch (recurrence) {
     case 'daily':
       date.setDate(date.getDate() + 1);
@@ -94,18 +136,21 @@ function getNextRecurrenceDate(dateStr, recurrence) {
       date.setDate(date.getDate() + 14);
       break;
     case 'monthly':
-      date.setMonth(date.getMonth() + 1);
+      date.setTime(addMonthsClamped(date, 1, anchorDay).getTime());
       break;
     case 'quarterly':
-      date.setMonth(date.getMonth() + 3);
+      date.setTime(addMonthsClamped(date, 3, anchorDay).getTime());
       break;
-    case 'yearly':
-      date.setFullYear(date.getFullYear() + 1);
+    case 'yearly': {
+      const year = date.getFullYear() + 1;
+      const month = date.getMonth();
+      date.setFullYear(year, month, Math.min(anchorDay, getDaysInMonth(year, month)));
       break;
+    }
     default:
       return null;
   }
-  
+
   return toDateKey(date);
 }
 
@@ -113,23 +158,25 @@ function expandRecurringTransactions(startDate, endDate) {
   const expanded = [];
   const startKey = toDateKey(startDate);
   const endKey = toDateKey(endDate);
-  
+
   for (const txn of transactions) {
-    // Add the original transaction if it's in range
-    if (txn.date >= startKey && txn.date <= endKey) {
+    const excludedDates = new Set(Array.isArray(txn.excludedDates) ? txn.excludedDates : []);
+    const recurrenceEndDate = typeof txn.recurrenceEndDate === 'string' ? txn.recurrenceEndDate : null;
+
+    if (txn.date >= startKey && txn.date <= endKey && !excludedDates.has(txn.date)) {
       expanded.push(txn);
     }
-    
-    // If it's recurring, generate instances
+
     if (txn.recurrence && txn.recurrence !== 'one-time') {
+      const anchorDay = new Date(txn.date + 'T00:00:00').getDate();
       let currentDate = txn.date;
-      
-      // Generate recurring instances
+
       while (true) {
-        const nextDate = getNextRecurrenceDate(currentDate, txn.recurrence);
+        const nextDate = getNextRecurrenceDate(currentDate, txn.recurrence, anchorDay);
         if (!nextDate || nextDate > endKey) break;
-        
-        if (nextDate >= startKey) {
+        if (recurrenceEndDate && nextDate > recurrenceEndDate) break;
+
+        if (nextDate >= startKey && !excludedDates.has(nextDate)) {
           expanded.push({
             ...txn,
             id: `${txn.id}-recur-${nextDate}`,
@@ -138,32 +185,36 @@ function expandRecurringTransactions(startDate, endDate) {
             originalId: txn.id,
           });
         }
-        
+
         currentDate = nextDate;
       }
     }
   }
-  
+
   return expanded;
 }
 
-function prepareChartData(days) {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
-  
+function getBalanceBefore(dateKey) {
+  const targetDate = new Date(dateKey + 'T00:00:00');
+  const expandStart = new Date(targetDate);
+  expandStart.setFullYear(expandStart.getFullYear() - 10);
+
+  const allTransactions = expandRecurringTransactions(expandStart, targetDate);
+
+  return allTransactions
+    .filter((item) => item.date < dateKey)
+    .reduce((sum, item) => sum + item.amount, 0);
+}
+
+function prepareChartDataForRange(startDate, endDate) {
   const allTransactions = expandRecurringTransactions(startDate, endDate);
-  
-  // Group by date
   const dailyData = new Map();
-  
-  // Initialize all dates in range
+
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
     const dateKey = toDateKey(d);
-    dailyData.set(dateKey, { income: 0, expenses: 0 });
+    dailyData.set(dateKey, { income: 0, expenses: 0, net: 0 });
   }
-  
-  // Populate with transaction data
+
   for (const txn of allTransactions) {
     if (dailyData.has(txn.date)) {
       const data = dailyData.get(txn.date);
@@ -172,82 +223,51 @@ function prepareChartData(days) {
       } else {
         data.expenses += Math.abs(txn.amount);
       }
+      data.net += txn.amount;
     }
   }
-  
-  // Convert to arrays for Chart.js
+
+  const startKey = toDateKey(startDate);
   const labels = [];
   const incomeData = [];
   const expensesData = [];
+  const balanceData = [];
+  let runningBalance = getBalanceBefore(startKey);
+  const startingBalance = runningBalance;
   let totalIncome = 0;
   let totalExpenses = 0;
-  
+
   for (const [date, data] of dailyData) {
+    runningBalance += data.net;
     labels.push(date);
     incomeData.push(data.income);
     expensesData.push(data.expenses);
+    balanceData.push(runningBalance);
     totalIncome += data.income;
     totalExpenses += data.expenses;
   }
-  
+
   return {
     labels,
     incomeData,
     expensesData,
+    balanceData,
+    startingBalance,
+    endingBalance: balanceData.at(-1) ?? startingBalance,
     totalIncome,
     totalExpenses,
   };
+}
+
+function prepareChartData(days) {
+  const { startDate, endDate } = getRangeDates(days);
+  return prepareChartDataForRange(startDate, endDate);
 }
 
 function prepareMonthChartData(year, month) {
   const startDate = new Date(year, month, 1);
   const endDate = new Date(year, month + 1, 0);
-  
-  const allTransactions = expandRecurringTransactions(startDate, endDate);
-  
-  // Group by date
-  const dailyData = new Map();
-  
-  // Initialize all dates in the month
-  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-    const dateKey = toDateKey(d);
-    dailyData.set(dateKey, { income: 0, expenses: 0 });
-  }
-  
-  // Populate with transaction data
-  for (const txn of allTransactions) {
-    if (dailyData.has(txn.date)) {
-      const data = dailyData.get(txn.date);
-      if (txn.amount > 0) {
-        data.income += txn.amount;
-      } else {
-        data.expenses += Math.abs(txn.amount);
-      }
-    }
-  }
-  
-  // Convert to arrays for Chart.js
-  const labels = [];
-  const incomeData = [];
-  const expensesData = [];
-  let totalIncome = 0;
-  let totalExpenses = 0;
-  
-  for (const [date, data] of dailyData) {
-    labels.push(date);
-    incomeData.push(data.income);
-    expensesData.push(data.expenses);
-    totalIncome += data.income;
-    totalExpenses += data.expenses;
-  }
-  
-  return {
-    labels,
-    incomeData,
-    expensesData,
-    totalIncome,
-    totalExpenses,
-  };
+  return prepareChartDataForRange(startDate, endDate);
 }
 
 function populateYearSelect() {
@@ -287,10 +307,23 @@ function updateChart() {
   totalIncomeDisplay.textContent = formatCurrency(chartData.totalIncome);
   totalExpensesDisplay.textContent = formatCurrency(chartData.totalExpenses);
   const net = chartData.totalIncome - chartData.totalExpenses;
+  if (netLabelDisplay) {
+    netLabelDisplay.textContent = 'Balance Change';
+  }
   netAmountDisplay.textContent = formatCurrency(net);
   netAmountDisplay.className = net === 0 ? "" : net > 0 ? "positive" : "negative";
+  if (startingBalanceDisplay) {
+    startingBalanceDisplay.textContent = formatCurrency(chartData.startingBalance);
+    startingBalanceDisplay.className = chartData.startingBalance === 0 ? "" : chartData.startingBalance > 0 ? "positive" : "negative";
+  }
+  if (balanceLabelDisplay) {
+    balanceLabelDisplay.textContent = viewMode === 'timeRange' ? 'Current Balance' : 'Ending Balance';
+  }
+  if (currentBalanceDisplay) {
+    currentBalanceDisplay.textContent = formatCurrency(chartData.endingBalance);
+    currentBalanceDisplay.className = chartData.endingBalance === 0 ? "" : chartData.endingBalance > 0 ? "positive" : "negative";
+  }
   
-  // Destroy existing chart if it exists
   if (chart) {
     chart.destroy();
   }
@@ -304,13 +337,16 @@ function updateChart() {
   }
 
   const css = getComputedStyle(document.documentElement);
-  const accent = css.getPropertyValue('--accent').trim() || '#dea94a';
   const accentStrong = css.getPropertyValue('--accent-strong').trim() || '#c79031';
   const good = css.getPropertyValue('--good').trim() || '#3d876b';
   const bad = css.getPropertyValue('--bad').trim() || '#a63e36';
   const text = css.getPropertyValue('--text').trim() || '#183038';
   const border = css.getPropertyValue('--border').trim() || '#d9c7a4';
   const isPie = chartType === 'pie';
+  const balanceColor = accentStrong;
+  const incomeImpactData = chartData.incomeData;
+  const expenseImpactData = chartData.expensesData.map((value) => -value);
+  const baselineData = chartData.labels.map(() => chartData.startingBalance);
   const datasets = isPie
     ? [{
         data: [chartData.totalIncome, chartData.totalExpenses],
@@ -320,23 +356,60 @@ function updateChart() {
       }]
     : [
         {
-          label: 'Income',
-          data: chartData.incomeData,
+          label: 'Income Impact',
+          data: incomeImpactData,
+          type: chartType === 'bar' ? 'bar' : 'line',
           borderColor: good,
-          backgroundColor: chartType === 'line' ? 'rgba(61, 135, 107, 0.18)' : 'rgba(61, 135, 107, 0.72)',
-          borderWidth: 2,
+          backgroundColor: chartType === 'line' ? 'rgba(61, 135, 107, 0.1)' : 'rgba(61, 135, 107, 0.5)',
+          borderWidth: 1.5,
           tension: 0.35,
           fill: chartType === 'line',
+          pointRadius: chartType === 'bar' ? 1 : 0,
+          pointHoverRadius: 3,
+          yAxisID: 'yBalance',
         },
         {
-          label: 'Expenses',
-          data: chartData.expensesData,
+          label: 'Expense Impact',
+          data: expenseImpactData,
+          type: chartType === 'bar' ? 'bar' : 'line',
           borderColor: bad,
-          backgroundColor: chartType === 'line' ? 'rgba(166, 62, 54, 0.16)' : 'rgba(166, 62, 54, 0.7)',
-          borderWidth: 2,
+          backgroundColor: chartType === 'line' ? 'rgba(166, 62, 54, 0.1)' : 'rgba(166, 62, 54, 0.48)',
+          borderWidth: 1.5,
           tension: 0.35,
           fill: chartType === 'line',
-        }
+          pointRadius: chartType === 'bar' ? 1 : 0,
+          pointHoverRadius: 3,
+          yAxisID: 'yBalance',
+        },
+        {
+          label: 'Starting Balance (Baseline)',
+          data: baselineData,
+          type: 'line',
+          borderColor: 'rgba(199, 144, 49, 0.32)',
+          borderDash: [6, 6],
+          borderWidth: 1,
+          tension: 0,
+          fill: false,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          yAxisID: 'yBalance',
+        },
+        {
+          label: 'Balance',
+          data: chartData.balanceData,
+          type: 'line',
+          borderColor: balanceColor,
+          backgroundColor: 'rgba(199, 144, 49, 0.16)',
+          borderWidth: 4,
+          tension: 0.2,
+          fill: false,
+          pointRadius: chartType === 'bar' ? 2 : 1,
+          pointHoverRadius: 5,
+          pointBackgroundColor: balanceColor,
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1,
+          yAxisID: 'yBalance',
+        },
       ];
 
   chart = new Chart(ctx, {
@@ -391,15 +464,17 @@ function updateChart() {
         }
       },
       scales: isPie ? undefined : {
-        y: {
-          beginAtZero: true,
+        yBalance: {
+          type: 'linear',
+          position: 'left',
+          beginAtZero: false,
           grid: {
             color: border,
           },
           ticks: {
             color: text,
             callback: function(value) {
-              return '$' + value.toFixed(0);
+              return formatCurrency(Number(value));
             }
           }
         },

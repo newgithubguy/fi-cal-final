@@ -245,6 +245,8 @@
           <div class="list-header">
             <h3 id="transactionListTitle">Transactions</h3>
             <div class="list-actions">
+              <input id="transactionSearchInput" type="search" placeholder="Search transactions..." aria-label="Search transactions" />
+              <span id="transactionSearchCount" class="search-count hidden" aria-live="polite"></span>
               <button id="exportCsv" type="button">Export CSV</button>
               <select id="importMode" aria-label="Import mode">
                 <option value="merge" selected>Merge Import</option>

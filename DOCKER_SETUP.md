@@ -2,11 +2,38 @@
 
 Use this guide to run the mobile project in Docker.
 
+## GitHub Container Registry (Recommended)
+
+This project publishes a container image to GitHub Container Registry (GHCR):
+
+- `ghcr.io/newgithubguy/fi-cal-final:latest`
+
+Login once if the image is private:
+
+```bash
+echo YOUR_GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+```
+
 ## Quick Start
+
+Optional: create a local environment override from the template.
 
 ```bash
 cd /path/to/fi-cal-final
-docker compose up -d --build
+cp .env.example .env
+```
+
+On PowerShell:
+
+```powershell
+cd C:\path\to\fi-cal-final
+Copy-Item .env.example .env
+```
+
+```bash
+cd /path/to/fi-cal-final
+docker compose pull
+docker compose up -d
 ```
 
 Access:
@@ -32,9 +59,20 @@ docker compose logs -f
 
 ## Rebuild After Updates
 
+If you are using GHCR image deploys:
+
 ```bash
 cd /path/to/fi-cal-final
-git pull origin master
+git pull origin main
+docker compose pull
+docker compose up -d
+```
+
+If you are developing locally and need a local image rebuild:
+
+```bash
+cd /path/to/fi-cal-final
+git pull origin main
 docker compose down
 docker compose build --no-cache
 docker compose up -d
@@ -46,8 +84,7 @@ docker compose up -d
 cd /path/to/fi-cal-final
 git fetch origin
 git pull origin main
-docker compose down
-docker compose build --no-cache
+docker compose pull
 docker compose up -d
 ```
 

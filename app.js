@@ -40,6 +40,8 @@ const recurrenceEndDateHint = document.getElementById("recurrenceEndDateHint");
 const recurrenceEndDateLabel = document.getElementById("recurrenceEndDateLabel");
 const transactionList = document.getElementById("transactionList");
 const transactionListTitle = document.getElementById("transactionListTitle");
+const transactionSearchInput = document.getElementById("transactionSearchInput");
+const transactionSearchCount = document.getElementById("transactionSearchCount");
 const monthChangeDisplay = document.getElementById("monthChangeDisplay");
 const currentAccountDisplay = document.getElementById("currentAccountDisplay");
 const endBalanceDisplay = document.getElementById("endBalanceDisplay");
@@ -186,7 +188,29 @@ function renderRecentTransactionsNotepad() {
 
   entries.slice(0, 10).forEach((entry) => {
     const item = document.createElement("li");
+    item.className = "recent-transaction-item";
     item.textContent = formatManualTransactionNotepadItem(entry);
+
+    const dateKey = typeof entry.date === "string" ? entry.date : "";
+    const canNavigate = /^\d{4}-\d{2}-\d{2}$/.test(dateKey);
+
+    if (canNavigate) {
+      item.setAttribute("role", "button");
+      item.tabIndex = 0;
+      item.title = `Jump to ${dateKey}`;
+
+      item.addEventListener("click", () => {
+        navigateToTransactionDate(dateKey);
+      });
+
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          navigateToTransactionDate(dateKey);
+        }
+      });
+    }
+
     recentTransactionsList.appendChild(item);
   });
 }
@@ -203,6 +227,54 @@ function getTransactionsForDateKey(dateKey) {
   expandEnd.setFullYear(expandEnd.getFullYear() + 1);
 
   return expandRecurringTransactions(expandStart, expandEnd).filter((item) => item.date === dateKey);
+}
+
+function getAllCalendarTransactionsForSearch() {
+  if (!transactions.length) {
+    return [];
+  }
+
+  const validDateKeys = transactions
+    .map((txn) => txn.date)
+    .filter((dateKey) => /^\d{4}-\d{2}-\d{2}$/.test(dateKey));
+
+  if (!validDateKeys.length) {
+    return [];
+  }
+
+  const startKey = validDateKeys.reduce((earliest, dateKey) => (dateKey < earliest ? dateKey : earliest), validDateKeys[0]);
+  const searchStart = new Date(`${startKey}T00:00:00`);
+
+  const explicitEndKeys = [
+    ...validDateKeys,
+    ...transactions
+      .map((txn) => txn.recurrenceEndDate)
+      .filter((dateKey) => /^\d{4}-\d{2}-\d{2}$/.test(dateKey || "")),
+  ];
+
+  const explicitEndKey = explicitEndKeys.reduce((latest, dateKey) => (dateKey > latest ? dateKey : latest), explicitEndKeys[0]);
+  const explicitSearchEnd = new Date(`${explicitEndKey}T00:00:00`);
+
+  const hasOpenEndedRecurring = transactions.some(
+    (txn) => isRecurringRecurrence(txn.recurrence) && !txn.recurrenceEndDate
+  );
+
+  const recurringHorizonEnd = new Date();
+  recurringHorizonEnd.setFullYear(recurringHorizonEnd.getFullYear() + 1);
+
+  let searchEnd = explicitSearchEnd;
+  if (hasOpenEndedRecurring && recurringHorizonEnd > searchEnd) {
+    searchEnd = recurringHorizonEnd;
+  }
+
+  // Protect UI responsiveness if a very long history is present.
+  const maxSearchSpanStart = new Date(searchEnd);
+  maxSearchSpanStart.setFullYear(maxSearchSpanStart.getFullYear() - 5);
+  if (searchStart < maxSearchSpanStart) {
+    searchStart.setTime(maxSearchSpanStart.getTime());
+  }
+
+  return sortTransactions(expandRecurringTransactions(searchStart, searchEnd));
 }
 
 function renderSelectedDayTransactionsNotepad() {
@@ -289,6 +361,16 @@ if (quickNotesInput) {
     const accountKey = activeAccountId || "default";
     accountQuickNotes[accountKey] = quickNotesInput.value;
     saveSidebarNotepads();
+  });
+}
+
+if (transactionSearchInput) {
+  transactionSearchInput.addEventListener("input", () => {
+    renderTransactions();
+  });
+
+  transactionSearchInput.addEventListener("search", () => {
+    renderTransactions();
   });
 }
 
@@ -2555,25 +2637,55 @@ if (firstNegativeBalanceBtn) {
 
 function renderTransactions() {
   transactionList.innerHTML = "";
-  
-  if (selectedDateKey) {
+  const normalizedSearchTerm = (transactionSearchInput?.value || "").trim().toLowerCase();
+  const isSearchingWholeCalendar = Boolean(normalizedSearchTerm);
+
+  if (isSearchingWholeCalendar) {
+    transactionListTitle.textContent = "Transactions - Search Results";
+  } else if (selectedDateKey) {
     transactionListTitle.textContent = `Transactions - ${selectedDateKey}`;
   } else {
     transactionListTitle.textContent = "Transactions";
   }
 
-  const dayItems = getTransactionsForDateKey(selectedDateKey);
+  const sourceItems = isSearchingWholeCalendar
+    ? getAllCalendarTransactionsForSearch()
+    : getTransactionsForDateKey(selectedDateKey);
 
-  if (!dayItems.length) {
+  const visibleItems = isSearchingWholeCalendar
+    ? sourceItems.filter((item) => matchesTransactionSearch(item, normalizedSearchTerm))
+    : sourceItems;
+
+  if (transactionSearchCount) {
+    if (isSearchingWholeCalendar) {
+      const matchLabel = visibleItems.length === 1 ? "match" : "matches";
+      transactionSearchCount.textContent = `${visibleItems.length} ${matchLabel}`;
+      transactionSearchCount.classList.remove("hidden");
+    } else {
+      transactionSearchCount.textContent = "";
+      transactionSearchCount.classList.add("hidden");
+    }
+  }
+
+  if (!sourceItems.length) {
     const empty = document.createElement("li");
-    empty.textContent = selectedDateKey 
-      ? `No transactions for ${selectedDateKey}.`
-      : "No transactions for this month yet.";
+    empty.textContent = isSearchingWholeCalendar
+      ? "No transactions available to search."
+      : selectedDateKey
+        ? `No transactions for ${selectedDateKey}.`
+        : "No transactions for this month yet.";
     transactionList.appendChild(empty);
     return;
   }
 
-  for (const item of dayItems) {
+  if (!visibleItems.length) {
+    const empty = document.createElement("li");
+    empty.textContent = `No transactions match "${transactionSearchInput?.value.trim() || ""}".`;
+    transactionList.appendChild(empty);
+    return;
+  }
+
+  for (const item of visibleItems) {
     const row = document.createElement("li");
 
     const date = document.createElement("span");
@@ -2647,6 +2759,32 @@ function renderTransactions() {
     row.append(date, payee, recurrence, description, notes, amount, editButton, removeButton);
     transactionList.appendChild(row);
   }
+}
+
+function matchesTransactionSearch(item, searchTerm) {
+  if (!searchTerm) {
+    return true;
+  }
+
+  const amountValue = Number(item.amount || 0);
+  const searchParts = [
+    item.date,
+    item.payee,
+    item.description,
+    item.notes,
+    item.recurrence,
+    String(amountValue),
+    String(Math.abs(amountValue)),
+    formatCurrency(amountValue),
+    formatCurrency(Math.abs(amountValue)),
+  ];
+
+  const normalizedText = searchParts
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return normalizedText.includes(searchTerm);
 }
 
 function render() {
@@ -2994,6 +3132,16 @@ function selectCalendarDate(dateKey) {
   dateInput.value = dateKey;
   render();
   focusEntryFieldAfterDatePick();
+}
+
+function navigateToTransactionDate(dateKey) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+    return;
+  }
+
+  const [year, month] = dateKey.split("-").map(Number);
+  currentMonth = new Date(year, month - 1, 1);
+  selectCalendarDate(dateKey);
 }
 
 function isTransactionFormValid() {

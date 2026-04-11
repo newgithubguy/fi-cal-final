@@ -27,8 +27,29 @@ Simple browser-based finance tracker with:
 
 From the `fi-man-mobile` folder:
 
+Optional: copy environment defaults and customize image/tag or secret:
+
 ```bash
-docker compose up -d --build
+cp .env.example .env
+```
+
+PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Default image source: `ghcr.io/newgithubguy/fi-cal-final:latest`
+
+If the GHCR image is private, authenticate first:
+
+```bash
+echo YOUR_GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
 ```
 
 Then open: `http://localhost:8081`
@@ -76,6 +97,7 @@ Requires Docker and Docker Compose.
 
 ```bash
 # Quick start with Docker Compose
+docker compose pull
 docker compose up -d
 ```
 
@@ -142,9 +164,10 @@ Open `index.html` directly in your browser for a basic offline experience (no pe
 6. Use the **Negative Balance Warning** summary box (next to End of Year) to jump directly to the first day balance drops below zero.
 
 ### Graphs & Analysis
-- Click **📊 Graph** to see income vs expenses over time.
-  - Green line shows income trends
-  - Red line shows expense trends
+- Click **📊 Graph** to see balance movement over time.
+   - A bold balance line shows your running balance
+   - A subtle dashed baseline shows the starting balance for the selected period
+   - Income and expense impacts show how daily activity moves balance up or down
   - Switch between time range (30, 60, 90, 180, or 365 days) or specific month view
   - View summary statistics for the selected period
   - Data automatically refreshes when returning from the calendar

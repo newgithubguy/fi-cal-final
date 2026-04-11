@@ -971,6 +971,26 @@ body {
   cursor: pointer;
 }
 
+.list-actions input[type="search"] {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 8px 10px;
+  font: inherit;
+  background: var(--surface);
+  min-width: 180px;
+}
+
+.search-count {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: var(--surface);
+  white-space: nowrap;
+}
+
 .transaction-form button {
   background: var(--accent);
   color: var(--accent-contrast);
@@ -1458,6 +1478,22 @@ body {
   line-height: 1.3;
 }
 
+.recent-transactions-list .recent-transaction-item {
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.recent-transactions-list .recent-transaction-item:hover {
+  background: var(--accent-soft);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.recent-transactions-list .recent-transaction-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .selected-day-transactions-list {
   list-style: none;
   margin: 0;
@@ -1879,6 +1915,7 @@ body {
 
   .list-actions button,
   .list-actions select,
+  .list-actions input[type="search"],
   .import-label {
     width: 100%;
   }
