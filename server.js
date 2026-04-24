@@ -442,7 +442,8 @@ function generateUuid() {
 // Register
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const username = String(req.body?.username || '').trim();
+    const password = String(req.body?.password || '').trim();
     
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
@@ -484,7 +485,8 @@ app.post('/api/auth/register', async (req, res) => {
 // Login
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const username = String(req.body?.username || '').trim();
+    const password = String(req.body?.password || '').trim();
     
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
@@ -517,7 +519,8 @@ app.post('/api/auth/login', async (req, res) => {
 // Admin-only login
 app.post('/api/auth/admin/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const username = String(req.body?.username || '').trim();
+    const password = String(req.body?.password || '').trim();
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
@@ -607,7 +610,9 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
 
 app.post('/api/admin/users', requireAdmin, async (req, res) => {
   try {
-    const { username, password, isAdmin } = req.body;
+    const username = String(req.body?.username || '').trim();
+    const password = String(req.body?.password || '').trim();
+    const { isAdmin } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
@@ -641,7 +646,9 @@ app.post('/api/admin/users', requireAdmin, async (req, res) => {
 app.patch('/api/admin/users/:userId', requireAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { password, isAdmin } = req.body;
+    const { isAdmin } = req.body;
+    const hasPassword = Object.prototype.hasOwnProperty.call(req.body || {}, 'password');
+    const password = hasPassword ? String(req.body.password || '').trim() : undefined;
     const targetUser = await dbGet('SELECT id, is_admin FROM users WHERE id = ?', [userId]);
 
     if (!targetUser) {
@@ -663,7 +670,7 @@ app.patch('/api/admin/users/:userId', requireAdmin, async (req, res) => {
       await dbRun('UPDATE users SET is_admin = ? WHERE id = ?', [isAdmin ? 1 : 0, userId]);
     }
 
-    if (typeof password === 'string') {
+    if (hasPassword) {
       if (password.length < 4) {
         return res.status(400).json({ error: 'Password must be at least 4 characters' });
       }

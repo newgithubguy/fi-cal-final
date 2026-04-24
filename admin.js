@@ -184,10 +184,26 @@ usersTableBody.addEventListener("click", async (event) => {
       return;
     }
 
+    const normalizedPassword = nextPassword.trim();
+    if (normalizedPassword.length < 4) {
+      setMessage("Password must be at least 4 characters (excluding spaces).", "error");
+      return;
+    }
+
+    const confirmPassword = window.prompt(`Re-enter the new password for ${username}:`);
+    if (confirmPassword === null) {
+      return;
+    }
+
+    if (confirmPassword.trim() !== normalizedPassword) {
+      setMessage("Passwords did not match. Password was not changed.", "error");
+      return;
+    }
+
     try {
       await apiRequest(`/admin/users/${userId}`, {
         method: "PATCH",
-        body: JSON.stringify({ password: nextPassword })
+        body: JSON.stringify({ password: normalizedPassword })
       });
       setMessage(`Password updated for ${username}.`, "success");
     } catch (error) {
