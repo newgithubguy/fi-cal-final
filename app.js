@@ -3855,6 +3855,11 @@ async function initialize() {
     if (usernameDisplay) {
       usernameDisplay.textContent = `Logged in as: ${authData.username}`;
     }
+
+    const adminConsoleLink = document.getElementById('adminConsoleLink');
+    if (adminConsoleLink) {
+      adminConsoleLink.hidden = !authData.isAdmin;
+    }
     
     // Verify API connectivity first
     console.log(`Attempting to connect to API at: ${API_BASE_URL}`);

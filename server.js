@@ -47,6 +47,18 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname)));
 
+app.get('/admin', (req, res) => {
+  if (!req.session || !req.session.userId) {
+    return res.redirect('/login.html?admin=1');
+  }
+
+  if (!req.session.isAdmin) {
+    return res.redirect('/index.html');
+  }
+
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 // Handle favicon requests to prevent 404 errors
 app.get('/favicon.ico', (req, res) => {
   res.status(204).end();
@@ -80,6 +92,7 @@ function initializeDatabase() {
         id TEXT PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
+        is_admin INTEGER NOT NULL DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -170,6 +183,23 @@ function initializeDatabase() {
 }
 
 async function migrateLegacySchema() {
+  const userColumns = await dbAll('PRAGMA table_info(users)');
+  const userColumnNames = new Set(userColumns.map((col) => col.name));
+
+  if (!userColumnNames.has('is_admin')) {
+    await dbRun('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0');
+    console.log('Migration: added users.is_admin');
+  }
+
+  const adminCount = await dbGet('SELECT COUNT(*) AS count FROM users WHERE is_admin = 1');
+  if (!adminCount || adminCount.count === 0) {
+    const firstUser = await dbGet('SELECT id FROM users ORDER BY created_at ASC, rowid ASC LIMIT 1');
+    if (firstUser) {
+      await dbRun('UPDATE users SET is_admin = 1 WHERE id = ?', [firstUser.id]);
+      console.log('Migration: promoted first user to admin');
+    }
+  }
+
   const accountsColumns = await dbAll('PRAGMA table_info(accounts)');
   const accountColumnNames = new Set(accountsColumns.map((col) => col.name));
 
@@ -386,6 +416,18 @@ function requireAuth(req, res, next) {
   next();
 }
 
+function requireAdmin(req, res, next) {
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  if (!req.session.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+
+  next();
+}
+
 // Helper to generate UUID
 function generateUuid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -415,20 +457,24 @@ app.post('/api/auth/register', async (req, res) => {
     if (existing) {
       return res.status(400).json({ error: 'Username already exists' });
     }
+
+    const userCountRow = await dbGet('SELECT COUNT(*) AS count FROM users');
+    const isAdmin = !userCountRow || userCountRow.count === 0 ? 1 : 0;
     
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
     const userId = generateUuid();
     
     // Create user
-    await dbRun('INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)', 
-      [userId, username, passwordHash]);
+    await dbRun('INSERT INTO users (id, username, password_hash, is_admin) VALUES (?, ?, ?, ?)', 
+      [userId, username, passwordHash, isAdmin]);
     
     // Create session
     req.session.userId = userId;
     req.session.username = username;
+    req.session.isAdmin = Boolean(isAdmin);
     
-    res.json({ success: true, username });
+    res.json({ success: true, username, isAdmin: Boolean(isAdmin) });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Registration failed' });
@@ -459,11 +505,46 @@ app.post('/api/auth/login', async (req, res) => {
     // Create session
     req.session.userId = user.id;
     req.session.username = user.username;
+    req.session.isAdmin = Boolean(user.is_admin);
     
-    res.json({ success: true, username: user.username });
+    res.json({ success: true, username: user.username, isAdmin: Boolean(user.is_admin) });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Admin-only login
+app.post('/api/auth/admin/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    const user = await dbGet('SELECT * FROM users WHERE username = ?', [username]);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (!user.is_admin) {
+      return res.status(403).json({ error: 'Admin account required' });
+    }
+
+    req.session.userId = user.id;
+    req.session.username = user.username;
+    req.session.isAdmin = true;
+
+    res.json({ success: true, username: user.username, isAdmin: true });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({ error: 'Admin login failed' });
   }
 });
 
@@ -480,9 +561,154 @@ app.post('/api/auth/logout', (req, res) => {
 // Check auth status
 app.get('/api/auth/status', (req, res) => {
   if (req.session && req.session.userId) {
-    res.json({ authenticated: true, username: req.session.username });
+    res.json({
+      authenticated: true,
+      username: req.session.username,
+      isAdmin: Boolean(req.session.isAdmin)
+    });
   } else {
     res.json({ authenticated: false });
+  }
+});
+
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    const users = await dbAll(
+      `SELECT
+        u.id,
+        u.username,
+        u.is_admin,
+        u.created_at,
+        COUNT(DISTINCT a.id) AS account_count,
+        COUNT(DISTINCT t.id) AS transaction_count
+      FROM users u
+      LEFT JOIN accounts a ON a.user_id = u.id
+      LEFT JOIN transactions t ON t.account_id = a.id
+      GROUP BY u.id, u.username, u.is_admin, u.created_at
+      ORDER BY u.created_at ASC, u.username ASC`
+    );
+
+    res.json({
+      users: users.map((user) => ({
+        id: user.id,
+        username: user.username,
+        isAdmin: Boolean(user.is_admin),
+        createdAt: user.created_at,
+        accountCount: user.account_count || 0,
+        transactionCount: user.transaction_count || 0,
+        isCurrentUser: user.id === req.session.userId
+      }))
+    });
+  } catch (error) {
+    console.error('List users error:', error);
+    res.status(500).json({ error: 'Failed to load users' });
+  }
+});
+
+app.post('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    const { username, password, isAdmin } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    if (password.length < 4) {
+      return res.status(400).json({ error: 'Password must be at least 4 characters' });
+    }
+
+    const existing = await dbGet('SELECT id FROM users WHERE username = ?', [username]);
+    if (existing) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    const userId = generateUuid();
+    const passwordHash = await bcrypt.hash(password, 10);
+    const adminFlag = isAdmin ? 1 : 0;
+
+    await dbRun(
+      'INSERT INTO users (id, username, password_hash, is_admin) VALUES (?, ?, ?, ?)',
+      [userId, username.trim(), passwordHash, adminFlag]
+    );
+
+    res.status(201).json({ success: true, id: userId });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+app.patch('/api/admin/users/:userId', requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { password, isAdmin } = req.body;
+    const targetUser = await dbGet('SELECT id, is_admin FROM users WHERE id = ?', [userId]);
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (typeof isAdmin === 'boolean') {
+      if (req.session.userId === userId && !isAdmin) {
+        return res.status(400).json({ error: 'You cannot remove your own admin access' });
+      }
+
+      if (!isAdmin) {
+        const adminCount = await dbGet('SELECT COUNT(*) AS count FROM users WHERE is_admin = 1');
+        if (targetUser.is_admin && adminCount && adminCount.count <= 1) {
+          return res.status(400).json({ error: 'At least one admin must remain' });
+        }
+      }
+
+      await dbRun('UPDATE users SET is_admin = ? WHERE id = ?', [isAdmin ? 1 : 0, userId]);
+    }
+
+    if (typeof password === 'string') {
+      if (password.length < 4) {
+        return res.status(400).json({ error: 'Password must be at least 4 characters' });
+      }
+
+      const passwordHash = await bcrypt.hash(password, 10);
+      await dbRun('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, userId]);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+app.delete('/api/admin/users/:userId', requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (req.session.userId === userId) {
+      return res.status(400).json({ error: 'You cannot delete your own account' });
+    }
+
+    const targetUser = await dbGet('SELECT id, is_admin FROM users WHERE id = ?', [userId]);
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (targetUser.is_admin) {
+      const adminCount = await dbGet('SELECT COUNT(*) AS count FROM users WHERE is_admin = 1');
+      if (adminCount && adminCount.count <= 1) {
+        return res.status(400).json({ error: 'At least one admin must remain' });
+      }
+    }
+
+    await dbRun('DELETE FROM transactions WHERE account_id IN (SELECT id FROM accounts WHERE user_id = ?)', [userId]);
+    await dbRun('DELETE FROM entry_histories WHERE account_id IN (SELECT id FROM accounts WHERE user_id = ?)', [userId]);
+    await dbRun('DELETE FROM active_account WHERE user_id = ?', [userId]);
+    await dbRun('DELETE FROM accounts WHERE user_id = ?', [userId]);
+    await dbRun('DELETE FROM users WHERE id = ?', [userId]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
   }
 });
 

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Console - Finance Calendar</title>
+  <link rel="icon" type="image/png" href="build/icon.png" />
+  <link rel="shortcut icon" href="build/icon.ico" />
+  <link rel="stylesheet" href="styles.css?v=1.3.9" />
+</head>
+<body class="admin-page">
+  <main class="admin-shell">
+    <header class="topbar card admin-topbar">
+      <div>
+        <p class="admin-eyebrow">Administration</p>
+        <h1>Admin Console</h1>
+        <p class="subtitle">Create users, reset passwords, and control admin access.</p>
+      </div>
+      <div class="top-links-group admin-links">
+        <span id="adminUsernameDisplay" class="username-display"></span>
+        <a href="/index.html" class="back-link">Back to App</a>
+      </div>
+    </header>
+
+    <section class="card admin-layout">
+      <section class="admin-panel">
+        <div class="admin-section-header">
+          <div>
+            <p class="admin-eyebrow">Create User</p>
+            <h2>Add user</h2>
+          </div>
+        </div>
+
+        <form id="createUserForm" class="admin-form">
+          <label>
+            Username
+            <input id="newUsername" type="text" maxlength="50" required autocomplete="username" />
+          </label>
+          <label>
+            Temporary password
+            <input id="newPassword" type="password" minlength="4" required autocomplete="new-password" />
+          </label>
+          <label class="admin-checkbox-row">
+            <input id="newIsAdmin" type="checkbox" />
+            <span>Grant admin access</span>
+          </label>
+          <button type="submit" class="graph-link admin-submit-btn">Create user</button>
+        </form>
+      </section>
+
+      <section class="admin-panel admin-panel-wide">
+        <div class="admin-section-header">
+          <div>
+            <p class="admin-eyebrow">User Directory</p>
+            <h2>Manage users</h2>
+          </div>
+          <button id="refreshUsersBtn" type="button" class="back-link">Refresh</button>
+        </div>
+
+        <p id="adminMessage" class="admin-message" aria-live="polite"></p>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Created</th>
+                <th>Data</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr>
+                <td colspan="5" class="admin-empty">Loading users...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

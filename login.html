@@ -95,6 +95,24 @@
       background: #ccc;
       cursor: not-allowed;
     }
+    .btn-secondary {
+      padding: 0.75rem;
+      background: #123f50;
+      color: #f8f4e8;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-secondary:hover {
+      background: #0f3442;
+    }
+    .btn-secondary:disabled {
+      background: #8798a0;
+      cursor: not-allowed;
+    }
     .form-toggle {
       text-align: center;
       margin-top: 1rem;
@@ -143,6 +161,7 @@
       <img src="build/icon.png" alt="Fi-Cal logo" class="login-logo" />
       <h1>Fi-Cal</h1>
       <p id="formTitle">Login to your account</p>
+      <p id="adminModeHint" class="is-hidden">Admin mode: sign in with an admin account.</p>
     </div>
     
     <div id="errorMessage" class="error-message is-hidden"></div>
@@ -159,6 +178,7 @@
       </div>
       
       <button type="submit" class="btn-primary" id="submitBtn">Login</button>
+      <button type="button" class="btn-secondary" id="adminLoginBtn">Admin Login</button>
     </form>
     
     <div class="form-toggle">
@@ -177,6 +197,11 @@
     const toggleText = document.getElementById('toggleText');
     const toggleLink = document.getElementById('toggleLink');
     const errorMessage = document.getElementById('errorMessage');
+    const adminModeHint = document.getElementById('adminModeHint');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const forceAdminMode = searchParams.get('admin') === '1';
     
     let isLoginMode = true;
     
@@ -188,7 +213,11 @@
         });
         const data = await response.json();
         if (data.authenticated) {
-          window.location.href = '/index.html';
+          if (forceAdminMode) {
+            window.location.href = data.isAdmin ? '/admin' : '/index.html';
+          } else {
+            window.location.href = '/index.html';
+          }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -196,9 +225,23 @@
     }
     
     checkAuth();
+
+    if (forceAdminMode) {
+      isLoginMode = true;
+      formTitle.textContent = 'Admin login';
+      submitBtn.textContent = 'Login';
+      toggleText.textContent = 'Admin access only';
+      toggleLink.textContent = 'Register disabled';
+      toggleLink.style.pointerEvents = 'none';
+      adminModeHint.classList.remove('is-hidden');
+    }
     
     // Toggle between login and register
     toggleLink.addEventListener('click', (e) => {
+      if (forceAdminMode) {
+        e.preventDefault();
+        return;
+      }
       e.preventDefault();
       isLoginMode = !isLoginMode;
       
@@ -240,7 +283,9 @@
       hideError();
       
       try {
-        const endpoint = isLoginMode ? '/auth/login' : '/auth/register';
+        const endpoint = forceAdminMode
+          ? '/auth/admin/login'
+          : (isLoginMode ? '/auth/login' : '/auth/register');
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -251,8 +296,7 @@
         const data = await response.json();
         
         if (response.ok && data.success) {
-          // Redirect to main app
-          window.location.href = '/index.html';
+          window.location.href = forceAdminMode ? '/admin' : '/index.html';
         } else {
           showError(data.error || 'Authentication failed');
           submitBtn.disabled = false;
@@ -262,6 +306,10 @@
         showError('Connection error. Please try again.');
         submitBtn.disabled = false;
       }
+    });
+
+    adminLoginBtn.addEventListener('click', () => {
+      window.location.href = '/login.html?admin=1';
     });
     
     function showError(message) {

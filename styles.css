@@ -1651,6 +1651,194 @@ body {
   border-color: var(--accent);
 }
 
+.admin-page {
+  display: block;
+}
+
+.admin-shell {
+  width: min(1280px, calc(100% - 32px));
+  margin: 24px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-topbar {
+  max-width: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-links {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-layout {
+  max-width: none;
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.admin-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.admin-panel-wide {
+  min-width: 0;
+}
+
+.admin-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.admin-section-header h2 {
+  margin: 0;
+}
+
+.admin-eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.admin-form input[type="text"],
+.admin-form input[type="password"] {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+}
+
+.admin-checkbox-row {
+  flex-direction: row !important;
+  align-items: center;
+  font-weight: 500 !important;
+}
+
+.admin-submit-btn {
+  border: none;
+  cursor: pointer;
+}
+
+.admin-message {
+  min-height: 24px;
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.admin-message[data-type="success"] {
+  color: var(--good);
+}
+
+.admin-message[data-type="error"] {
+  color: var(--bad);
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.admin-user-name {
+  font-weight: 700;
+}
+
+.admin-user-meta {
+  margin-top: 4px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.admin-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-toggle.is-locked {
+  opacity: 0.7;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-action-btn {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.admin-delete-btn {
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--bad);
+  color: var(--card);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.admin-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-empty {
+  text-align: center;
+  color: var(--muted);
+}
+
 .refresh-btn {
   padding: 8px 16px;
   background: var(--surface);
@@ -1878,6 +2066,17 @@ body {
 
   .graph-link {
     margin-left: 0;
+  }
+
+  .admin-topbar,
+  .admin-layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .admin-shell {
+    width: min(100% - 24px, 1280px);
+    margin: 12px auto 24px;
   }
 
   .weekday-header {
