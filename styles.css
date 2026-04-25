@@ -143,6 +143,23 @@ body {
   border-color: var(--accent);
 }
 
+.account-item.has-account-color {
+  border-color: var(--account-color);
+  background: var(--account-color-soft);
+}
+
+.account-item.has-account-color:hover {
+  border-color: var(--account-color);
+  background: var(--account-color-soft-strong, var(--account-color-soft));
+}
+
+.account-item.active.has-account-color {
+  background: var(--account-color-soft-strong, var(--account-color-soft));
+  border-color: var(--account-color);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--account-color);
+}
+
 .account-name {
   flex: 1;
   overflow: hidden;
@@ -453,6 +470,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.current-account-inline.has-account-color {
+  border-color: var(--account-color);
+  background: var(--account-color-soft);
 }
 
 .month-nav-btn {

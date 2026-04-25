@@ -2589,6 +2589,7 @@ function renderCalendar() {
   if (currentAccountDisplay) {
     const activeAccount = accounts.find((acc) => acc.id === activeAccountId) || accounts[0];
     currentAccountDisplay.textContent = activeAccount ? activeAccount.name : "No account selected";
+    updateCurrentAccountFieldColor(activeAccount);
   }
   const endOfMonthBalance = startingBalance + monthChange;
   endBalanceDisplay.textContent = formatCurrency(endOfMonthBalance);
@@ -2787,6 +2788,46 @@ function matchesTransactionSearch(item, searchTerm) {
   return normalizedText.includes(searchTerm);
 }
 
+function toRgbaFromHex(color, alpha) {
+  if (typeof color !== "string") {
+    return null;
+  }
+
+  const match = color.trim().match(/^#([0-9a-fA-F]{6})$/);
+  if (!match) {
+    return null;
+  }
+
+  const hex = match[1];
+  const red = Number.parseInt(hex.slice(0, 2), 16);
+  const green = Number.parseInt(hex.slice(2, 4), 16);
+  const blue = Number.parseInt(hex.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function updateCurrentAccountFieldColor(activeAccount) {
+  const currentAccountField = currentAccountDisplay?.closest(".current-account-inline");
+  if (!currentAccountField) {
+    return;
+  }
+
+  currentAccountField.classList.remove("has-account-color");
+  currentAccountField.style.removeProperty("--account-color");
+  currentAccountField.style.removeProperty("--account-color-soft");
+
+  if (!activeAccount?.color) {
+    return;
+  }
+
+  currentAccountField.classList.add("has-account-color");
+  currentAccountField.style.setProperty("--account-color", activeAccount.color);
+  currentAccountField.style.setProperty(
+    "--account-color-soft",
+    toRgbaFromHex(activeAccount.color, 0.18) || "var(--accent-soft)"
+  );
+}
+
 function render() {
   renderCalendar();
   renderTransactions();
@@ -2796,28 +2837,38 @@ function render() {
 
 function renderAccounts() {
   if (!accountsList) return;
-  
+
   accountsList.innerHTML = '';
-  
+
   accounts.forEach((account, index) => {
     const li = document.createElement('li');
     li.className = 'account-item';
+    li.style.removeProperty('--account-color');
+    li.style.removeProperty('--account-color-soft');
+    li.style.removeProperty('--account-color-soft-strong');
+
+    if (account.color) {
+      li.classList.add('has-account-color');
+      li.style.setProperty('--account-color', account.color);
+      li.style.setProperty('--account-color-soft', toRgbaFromHex(account.color, 0.14) || 'var(--accent-soft)');
+      li.style.setProperty('--account-color-soft-strong', toRgbaFromHex(account.color, 0.24) || 'var(--accent-soft)');
+    }
+
     if (account.id === activeAccountId) {
       li.classList.add('active');
     }
-    
-    // Add account color indicator
+
     if (account.color) {
       const colorIndicator = document.createElement('div');
       colorIndicator.className = 'account-color-indicator';
       colorIndicator.style.backgroundColor = account.color;
       li.appendChild(colorIndicator);
     }
-    
+
     const nameSpan = document.createElement('span');
     nameSpan.className = 'account-name';
     nameSpan.textContent = account.name;
-    
+
     const renameBtn = document.createElement('button');
     renameBtn.className = 'rename-account-btn';
     renameBtn.textContent = '✎';
@@ -2826,7 +2877,7 @@ function renderAccounts() {
       e.stopPropagation();
       renameAccount(account.id);
     };
-    
+
     const colorBtn = document.createElement('button');
     colorBtn.className = 'account-color-btn';
     colorBtn.textContent = '🎨';
@@ -2835,12 +2886,11 @@ function renderAccounts() {
       e.stopPropagation();
       openAccountColorPicker(account.id);
     };
-    
+
     li.appendChild(nameSpan);
     li.appendChild(renameBtn);
     li.appendChild(colorBtn);
-    
-    // Show "Set as Primary" button for non-primary accounts
+
     if (index > 0) {
       const setPrimaryBtn = document.createElement('button');
       setPrimaryBtn.className = 'set-primary-btn';
@@ -2852,8 +2902,7 @@ function renderAccounts() {
       };
       li.appendChild(setPrimaryBtn);
     }
-    
-    // Show delete button for all non-primary accounts
+
     if (index > 0) {
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'delete-account-btn';
@@ -2865,13 +2914,12 @@ function renderAccounts() {
       };
       li.appendChild(deleteBtn);
     }
-    
+
     li.onclick = () => switchAccount(account.id);
-    
+
     accountsList.appendChild(li);
   });
-  
-  // Update transfer account dropdowns
+
   updateTransferAccountOptions(transferAccountInput, transferAccountLabel);
   updateTransferAccountOptions(editTransferAccountInput, editTransferAccountLabel);
 }
@@ -2940,7 +2988,7 @@ function openAccountColorPicker(accountId) {
     btn.onclick = () => {
       account.color = btn.dataset.color;
       saveAccounts();
-      renderAccounts();
+      render();
       document.body.removeChild(modal);
     };
   });
@@ -2949,7 +2997,7 @@ function openAccountColorPicker(accountId) {
   modal.querySelector('#clearColorBtn').onclick = () => {
     account.color = null;
     saveAccounts();
-    renderAccounts();
+    render();
     document.body.removeChild(modal);
   };
   
