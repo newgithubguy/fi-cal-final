@@ -768,6 +768,7 @@ app.get('/api/accounts', requireAuth, async (req, res) => {
         return {
           id: account.id,
           name: account.name,
+          color: account.color || null,
           transactions: expandedTransactions
         };
       })
@@ -800,7 +801,10 @@ app.post('/api/accounts', requireAuth, async (req, res) => {
         continue;
       }
 
-      await dbRun('INSERT OR REPLACE INTO accounts (id, user_id, name) VALUES (?, ?, ?)', [account.id, userId, account.name]);
+      await dbRun(
+        'INSERT OR REPLACE INTO accounts (id, user_id, name, color) VALUES (?, ?, ?, ?)',
+        [account.id, userId, account.name, account.color || null]
+      );
 
       for (const txn of account.transactions || []) {
         await dbRun(
