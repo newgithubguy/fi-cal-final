@@ -412,12 +412,43 @@ function updateChart() {
         },
       ];
 
+  const todayKey = toDateKey(new Date());
+  const todayIndex = isPie ? -1 : chartData.labels.indexOf(todayKey);
+
+  const todayLinePlugin = {
+    id: 'todayLine',
+    afterDraw(chartInstance) {
+      if (todayIndex < 0) return;
+      const meta = chartInstance.getDatasetMeta(0);
+      if (!meta || !meta.data || !meta.data[todayIndex]) return;
+      const x = meta.data[todayIndex].x;
+      const { top, bottom } = chartInstance.chartArea;
+      const ctx2 = chartInstance.ctx;
+      ctx2.save();
+      ctx2.beginPath();
+      ctx2.moveTo(x, top);
+      ctx2.lineTo(x, bottom);
+      ctx2.strokeStyle = 'rgba(222, 169, 74, 0.85)';
+      ctx2.lineWidth = 2;
+      ctx2.setLineDash([5, 4]);
+      ctx2.stroke();
+      ctx2.setLineDash([]);
+      // Label
+      ctx2.font = '11px sans-serif';
+      ctx2.fillStyle = 'rgba(222, 169, 74, 0.95)';
+      ctx2.textAlign = 'center';
+      ctx2.fillText('Today', x, top - 4);
+      ctx2.restore();
+    }
+  };
+
   chart = new Chart(ctx, {
     type: chartType,
     data: {
       labels: isPie ? ['Income', 'Expenses'] : chartData.labels,
       datasets
     },
+    plugins: isPie ? [] : [todayLinePlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,

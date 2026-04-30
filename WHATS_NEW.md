@@ -1,6 +1,16 @@
 # What's New
 
-## Latest Updates (v1.3.2)
+## Latest Updates (v1.4.0)
+
+**Graph Improvements:**
+- A gold dashed **Today** line now appears on the Graph page, marking the current date on line and bar charts.
+- Makes it easy to see where today falls relative to your income and expense trends.
+- Automatically hidden when today is outside the selected date range or when viewing a pie chart.
+
+**Bug Fix:**
+- Account label colors now correctly persist after refreshing the page or restarting the server.
+
+## Previous Updates (v1.3.2)
 
 **Maintenance Release:**
 - Updated the app release version to 1.3.2.

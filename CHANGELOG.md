@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-04-30 (v1.4.0)
+
+### Added
+- Added a vertical "Today" marker line on the Graph page for line and bar chart modes.
+- The marker is a gold dashed vertical line with a "Today" label, matching the app accent color.
+- The line is automatically hidden when the current date falls outside the selected date range.
+- Account label colors now persist correctly after page reload and server restart.
+
+### Fixed
+- Fixed account color not being saved to or returned from the database when saving or loading accounts.
+
 ## 2026-03-24 (v1.3.2)
 
 ### Changed

@@ -157,6 +157,7 @@ Open `index.html` directly in your browser for a basic offline experience (no pe
 - Click **📊 Graph** to see balance movement over time.
    - A bold balance line shows your running balance
    - A subtle dashed baseline shows the starting balance for the selected period
+   - A gold dashed **Today** vertical line marks the current date (hidden when today is outside the selected range or on pie charts)
    - Income and expense impacts show how daily activity moves balance up or down
   - Switch between time range (30, 60, 90, 180, or 365 days) or specific month view
   - View summary statistics for the selected period
