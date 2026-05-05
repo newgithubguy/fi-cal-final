@@ -3772,24 +3772,41 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
       
       transactions.push(newTxn);
     } else {
-      // It's a base recurring transaction, just update it directly
-      // Handle unlinking
-      if (wasLinked && !isTransfer) {
-        deleteLinkedTransaction(txn.linkedTransactionId, txn.linkedAccountId);
-        txn.linkedTransactionId = null;
-        txn.linkedAccountId = null;
+      // It's a base recurring transaction - for "this occurrence only":
+      // exclude this occurrence date and create a new one-time transaction,
+      // leaving the base series intact.
+      const occurrenceDate = editData.seriesSplitDate || txn.date;
+
+      if (!txn.excludedDates) {
+        txn.excludedDates = [];
       }
-      
-      // Handle new linking
-      if (!wasLinked && isTransfer) {
+      if (!txn.excludedDates.includes(occurrenceDate)) {
+        txn.excludedDates.push(occurrenceDate);
+      }
+
+      // Create a new one-time transaction with the edited values
+      const newTxn = {
+        id: generateUuid(),
+        date: editData.date,
+        payee: editData.payee,
+        description: editData.description,
+        amount: editData.amount,
+        color: editData.color,
+        recurrence: 'one-time',
+        recurrenceEndDate: null,
+        notes: editData.notes
+      };
+
+      // Handle transfer for new transaction
+      if (isTransfer) {
         if (!transferToAccountId) {
           alert("Please select an account to transfer to.");
           return;
         }
         const linkedId = generateUuid();
-        txn.linkedTransactionId = linkedId;
-        txn.linkedAccountId = transferToAccountId;
-        
+        newTxn.linkedTransactionId = linkedId;
+        newTxn.linkedAccountId = transferToAccountId;
+
         const targetAccount = accounts.find(acc => acc.id === transferToAccountId);
         if (targetAccount) {
           const linkedTransaction = {
@@ -3800,9 +3817,9 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
             notes: editData.notes,
             amount: -editData.amount,
             color: editData.color,
-            recurrence: editData.recurrence,
-            recurrenceEndDate: editData.recurrenceEndDate,
-            linkedTransactionId: txn.id,
+            recurrence: 'one-time',
+            recurrenceEndDate: null,
+            linkedTransactionId: newTxn.id,
             linkedAccountId: activeAccountId,
           };
           targetAccount.transactions = targetAccount.transactions || [];
@@ -3810,50 +3827,8 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
           saveAccounts();
         }
       }
-      
-      // Handle change in linked account
-      if (wasLinked && isTransfer && txn.linkedAccountId !== transferToAccountId) {
-        deleteLinkedTransaction(txn.linkedTransactionId, txn.linkedAccountId);
-        
-        const linkedId = generateUuid();
-        txn.linkedTransactionId = linkedId;
-        txn.linkedAccountId = transferToAccountId;
-        
-        const targetAccount = accounts.find(acc => acc.id === transferToAccountId);
-        if (targetAccount) {
-          const linkedTransaction = {
-            id: linkedId,
-            date: editData.date,
-            description: editData.description,
-            payee: editData.payee,
-            notes: editData.notes,
-            amount: -editData.amount,
-            color: editData.color,
-            recurrence: editData.recurrence,
-            recurrenceEndDate: editData.recurrenceEndDate,
-            linkedTransactionId: txn.id,
-            linkedAccountId: activeAccountId,
-          };
-          targetAccount.transactions = targetAccount.transactions || [];
-          targetAccount.transactions.push(linkedTransaction);
-          saveAccounts();
-        }
-      }
-      
-      // Update transaction properties
-      txn.date = editData.date;
-      txn.payee = editData.payee;
-      txn.description = editData.description;
-      txn.amount = editData.amount;
-      txn.color = editData.color;
-      txn.recurrence = editData.recurrence;
-      txn.recurrenceEndDate = editData.recurrenceEndDate;
-      txn.notes = editData.notes;
-      
-      // Update linked transaction if it exists
-      if (txn.linkedTransactionId && txn.linkedAccountId) {
-        updateLinkedTransaction(txn);
-      }
+
+      transactions.push(newTxn);
     }
   }
   
