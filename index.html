@@ -222,6 +222,11 @@
               <input id="recurrenceEndDateInput" type="date" />
               <span id="recurrenceEndDateHint" class="field-hint" aria-live="polite"></span>
             </label>
+            <label id="weekendMoveToFridayLabel" class="checkbox-label hidden">
+              <input id="weekendMoveToFridayInput" type="checkbox" />
+              <span>If this recurring date lands on a weekend, move it to Friday</span>
+              <span class="field-hint">Applies to every generated occurrence in this recurring series.</span>
+            </label>
             <label class="notes-field">
               Notes
               <textarea id="notesInput" maxlength="200" placeholder="Optional notes or memo..."></textarea>
@@ -344,6 +349,11 @@
           Recurrence End Date
           <input id="editRecurrenceEndDateInput" type="date" />
           <span id="editRecurrenceEndDateHint" class="field-hint" aria-live="polite"></span>
+        </label>
+        <label id="editWeekendMoveToFridayLabel" class="checkbox-label hidden">
+          <input id="editWeekendMoveToFridayInput" type="checkbox" />
+          <span>If this recurring date lands on a weekend, move it to Friday</span>
+          <span class="field-hint">Applies to every generated occurrence in this recurring series.</span>
         </label>
         <label class="notes-field">
           Notes

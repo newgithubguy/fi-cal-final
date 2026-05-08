@@ -38,6 +38,8 @@ const recurrenceInput = document.getElementById("recurrenceInput");
 const recurrenceEndDateInput = document.getElementById("recurrenceEndDateInput");
 const recurrenceEndDateHint = document.getElementById("recurrenceEndDateHint");
 const recurrenceEndDateLabel = document.getElementById("recurrenceEndDateLabel");
+const weekendMoveToFridayInput = document.getElementById("weekendMoveToFridayInput");
+const weekendMoveToFridayLabel = document.getElementById("weekendMoveToFridayLabel");
 const transactionList = document.getElementById("transactionList");
 const transactionListTitle = document.getElementById("transactionListTitle");
 const transactionSearchInput = document.getElementById("transactionSearchInput");
@@ -87,6 +89,8 @@ const editRecurrenceInput = document.getElementById("editRecurrenceInput");
 const editRecurrenceEndDateInput = document.getElementById("editRecurrenceEndDateInput");
 const editRecurrenceEndDateHint = document.getElementById("editRecurrenceEndDateHint");
 const editRecurrenceEndDateLabel = document.getElementById("editRecurrenceEndDateLabel");
+const editWeekendMoveToFridayInput = document.getElementById("editWeekendMoveToFridayInput");
+const editWeekendMoveToFridayLabel = document.getElementById("editWeekendMoveToFridayLabel");
 const editNotesInput = document.getElementById("editNotesInput");
 const editCancel = document.getElementById("editCancel");
 const editRecurringModal = document.getElementById("editRecurringModal");
@@ -398,6 +402,10 @@ function normalizeTransactionColor(value) {
   return DEFAULT_TRANSACTION_COLOR;
 }
 
+function normalizeMoveWeekendToFriday(value) {
+  return value === true;
+}
+
 function updateRecurrenceEndDateFieldVisibility() {
   if (!recurrenceInput || !recurrenceEndDateLabel || !recurrenceEndDateInput) {
     return;
@@ -406,8 +414,15 @@ function updateRecurrenceEndDateFieldVisibility() {
   const recurring = isRecurringRecurrence(recurrenceInput.value);
   recurrenceEndDateLabel.classList.toggle("hidden", !recurring);
 
+  if (weekendMoveToFridayLabel && weekendMoveToFridayInput) {
+    weekendMoveToFridayLabel.classList.toggle("hidden", !recurring);
+  }
+
   if (!recurring) {
     recurrenceEndDateInput.value = "";
+    if (weekendMoveToFridayInput) {
+      weekendMoveToFridayInput.checked = false;
+    }
     setRecurrenceEndDateValidationHint();
   }
 }
@@ -420,8 +435,15 @@ function updateEditRecurrenceEndDateFieldVisibility() {
   const recurring = isRecurringRecurrence(editRecurrenceInput.value);
   editRecurrenceEndDateLabel.classList.toggle("hidden", !recurring);
 
+  if (editWeekendMoveToFridayLabel && editWeekendMoveToFridayInput) {
+    editWeekendMoveToFridayLabel.classList.toggle("hidden", !recurring);
+  }
+
   if (!recurring) {
     editRecurrenceEndDateInput.value = "";
+    if (editWeekendMoveToFridayInput) {
+      editWeekendMoveToFridayInput.checked = false;
+    }
     setEditRecurrenceEndDateValidationHint();
   }
 }
@@ -1497,6 +1519,9 @@ transactionForm.addEventListener("submit", (event) => {
   const color = normalizeTransactionColor(colorInput ? colorInput.value : DEFAULT_TRANSACTION_COLOR);
   const recurrence = recurrenceInput.value;
   const recurrenceEndDateValue = recurrenceEndDateInput ? recurrenceEndDateInput.value : "";
+  const moveWeekendToFriday = isRecurringRecurrence(recurrence) && weekendMoveToFridayInput
+    ? weekendMoveToFridayInput.checked
+    : false;
   const isTransfer = isTransferInput.checked;
   const transferToAccountId = transferAccountInput.value;
 
@@ -1536,6 +1561,7 @@ transactionForm.addEventListener("submit", (event) => {
     color,
     recurrence,
     recurrenceEndDate,
+    moveWeekendToFriday,
     linkedTransactionId,
     linkedAccountId: isTransfer ? transferToAccountId : null,
   };
@@ -1556,6 +1582,7 @@ transactionForm.addEventListener("submit", (event) => {
         color,
         recurrence,
         recurrenceEndDate,
+        moveWeekendToFriday,
         linkedTransactionId: newTransactionId,
         linkedAccountId: activeAccountId,
       };
@@ -1584,6 +1611,9 @@ transactionForm.addEventListener("submit", (event) => {
   }
   recurrenceInput.value = "one-time";
   updateRecurrenceEndDateFieldVisibility();
+  if (weekendMoveToFridayInput) {
+    weekendMoveToFridayInput.checked = false;
+  }
   dateInput.value = selectedDateKey;
   isTransferInput.checked = false;
   transferAccountLabel.classList.add("hidden");
@@ -1618,6 +1648,7 @@ function loadTransactions() {
         amount: Number(entry.amount),
         color: normalizeTransactionColor(entry.color),
         recurrence: entry.recurrence || 'one-time',
+        moveWeekendToFriday: normalizeMoveWeekendToFriday(entry.moveWeekendToFriday),
         excludedDates: Array.isArray(entry.excludedDates) ? entry.excludedDates : [],
         recurrenceEndDate: typeof entry.recurrenceEndDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(entry.recurrenceEndDate)
           ? entry.recurrenceEndDate
@@ -2072,6 +2103,7 @@ function parseCsv(content) {
       notes,
       amount,
       recurrence: recurrence || "one-time",
+      moveWeekendToFriday: false,
       excludedDates: [],
       recurrenceEndDate: null,
     });
@@ -2370,6 +2402,19 @@ function getNextRecurrenceDate(dateStr, recurrence, preferredDay = null) {
   return toDateKey(date);
 }
 
+function moveDateToFridayIfWeekend(dateKey) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  if (date.getDay() === 6) {
+    date.setDate(date.getDate() - 1);
+    return toDateKey(date);
+  }
+  if (date.getDay() === 0) {
+    date.setDate(date.getDate() - 2);
+    return toDateKey(date);
+  }
+  return dateKey;
+}
+
 function getLastOccurrenceBeforeDate(startDate, recurrence, targetDate) {
   if (!startDate || !recurrence || !targetDate || targetDate <= startDate) {
     return null;
@@ -2398,14 +2443,25 @@ function expandRecurringTransactions(startDate, endDate) {
   const endKey = toDateKey(endDate);
   
   for (const txn of transactions) {
+    const shouldMoveWeekendToFriday = normalizeMoveWeekendToFriday(txn.moveWeekendToFriday) && isRecurringRecurrence(txn.recurrence);
+    const excludedDates = new Set(txn.excludedDates || []);
+    const firstOccurrenceDate = shouldMoveWeekendToFriday ? moveDateToFridayIfWeekend(txn.date) : txn.date;
+
     // Add the original transaction if it's in range
-    if (txn.date >= startKey && txn.date <= endKey) {
-      expanded.push(txn);
+    if (
+      firstOccurrenceDate >= startKey
+      && firstOccurrenceDate <= endKey
+      && !excludedDates.has(firstOccurrenceDate)
+      && !excludedDates.has(txn.date)
+    ) {
+      expanded.push({
+        ...txn,
+        date: firstOccurrenceDate,
+      });
     }
     
     // If it's recurring, generate instances
     if (txn.recurrence && txn.recurrence !== 'one-time') {
-      const excludedDates = new Set(txn.excludedDates || []);
       const recurrenceEndDate = txn.recurrenceEndDate;
       let currentDate = txn.date;
       const anchorDay = new Date(`${txn.date}T00:00:00`).getDate();
@@ -2417,12 +2473,19 @@ function expandRecurringTransactions(startDate, endDate) {
         
         // Stop if we've reached the recurrence end date
         if (recurrenceEndDate && nextDate > recurrenceEndDate) break;
+
+        const occurrenceDate = shouldMoveWeekendToFriday ? moveDateToFridayIfWeekend(nextDate) : nextDate;
         
-        if (nextDate >= startKey && !excludedDates.has(nextDate)) {
+        if (
+          occurrenceDate >= startKey
+          && occurrenceDate <= endKey
+          && !excludedDates.has(occurrenceDate)
+          && !excludedDates.has(nextDate)
+        ) {
           expanded.push({
             ...txn,
             id: `${txn.id}-recur-${nextDate}`,
-            date: nextDate,
+            date: occurrenceDate,
             isRecurring: true,
             originalId: txn.id,
           });
@@ -3150,6 +3213,7 @@ function updateLinkedTransaction(txn) {
       linkedTxn.color = normalizeTransactionColor(txn.color);
       linkedTxn.recurrence = txn.recurrence;
       linkedTxn.recurrenceEndDate = txn.recurrenceEndDate || null;
+      linkedTxn.moveWeekendToFriday = normalizeMoveWeekendToFriday(txn.moveWeekendToFriday);
       saveAccounts();
     }
   }
@@ -3398,6 +3462,9 @@ function openEditTransactionModal(transactionId, sourceItem = null) {
   setEditDescriptionValidationHint();
   setEditAmountValidationHint();
   editRecurrenceInput.value = txn.recurrence || 'one-time';
+  if (editWeekendMoveToFridayInput) {
+    editWeekendMoveToFridayInput.checked = normalizeMoveWeekendToFriday(txn.moveWeekendToFriday);
+  }
   if (editRecurrenceEndDateInput) {
     editRecurrenceEndDateInput.value = txn.recurrenceEndDate || '';
   }
@@ -3452,6 +3519,9 @@ editTransactionForm.addEventListener("submit", (event) => {
   const editedAmount = editedTransactionType === "expense" ? -editedAmountMagnitude : editedAmountMagnitude;
   const editedColor = normalizeTransactionColor(editColorInput ? editColorInput.value : DEFAULT_TRANSACTION_COLOR);
   const editedRecurrenceEndDateValue = editRecurrenceEndDateInput ? editRecurrenceEndDateInput.value : "";
+  const editedMoveWeekendToFriday = isRecurringRecurrence(editedRecurrence) && editWeekendMoveToFridayInput
+    ? editWeekendMoveToFridayInput.checked
+    : false;
 
   const editDateValidationMessage = setEditDateValidationHint({ showRequiredWhenEmpty: true });
   const editDescriptionValidationMessage = setEditDescriptionValidationHint({ showRequiredWhenEmpty: true });
@@ -3497,6 +3567,7 @@ editTransactionForm.addEventListener("submit", (event) => {
     color: editedColor,
     recurrence: editRecurrenceInput.value,
     recurrenceEndDate: editedRecurrenceEndDate,
+    moveWeekendToFriday: editedMoveWeekendToFriday,
     notes: editNotesInput.value.trim(),
     isTransfer: editIsTransferInput.checked,
     transferToAccountId: editTransferAccountInput.value,
@@ -3585,6 +3656,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
           amount: editData.amount,
           color: editData.color,
           recurrence: editData.recurrence,
+          moveWeekendToFriday: editData.moveWeekendToFriday,
           notes: editData.notes,
           excludedDates: [],
           recurrenceEndDate: editData.recurrenceEndDate,
@@ -3613,6 +3685,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
               amount: -editData.amount,
               color: editData.color,
               recurrence: editData.recurrence,
+              moveWeekendToFriday: editData.moveWeekendToFriday,
               linkedTransactionId: futureTxn.id,
               linkedAccountId: activeAccountId,
               excludedDates: [],
@@ -3654,6 +3727,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
             amount: -editData.amount,
             color: editData.color,
             recurrence: editData.recurrence,
+            moveWeekendToFriday: editData.moveWeekendToFriday,
             recurrenceEndDate: editData.recurrenceEndDate,
             linkedTransactionId: baseTxn.id,
             linkedAccountId: activeAccountId,
@@ -3683,6 +3757,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
             amount: -editData.amount,
             color: editData.color,
             recurrence: editData.recurrence,
+            moveWeekendToFriday: editData.moveWeekendToFriday,
             recurrenceEndDate: editData.recurrenceEndDate,
             linkedTransactionId: baseTxn.id,
             linkedAccountId: activeAccountId,
@@ -3701,6 +3776,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
       baseTxn.color = editData.color;
       baseTxn.recurrence = editData.recurrence;
       baseTxn.recurrenceEndDate = editData.recurrenceEndDate;
+      baseTxn.moveWeekendToFriday = editData.moveWeekendToFriday;
       baseTxn.notes = editData.notes;
       
       // Update linked transaction if it exists
@@ -3735,6 +3811,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
         amount: editData.amount,
         color: editData.color,
         recurrence: 'one-time',
+        moveWeekendToFriday: false,
         recurrenceEndDate: null,
         notes: editData.notes
       };
@@ -3760,6 +3837,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
             amount: -editData.amount,
             color: editData.color,
             recurrence: 'one-time',
+            moveWeekendToFriday: false,
             recurrenceEndDate: null,
             linkedTransactionId: newTxn.id,
             linkedAccountId: activeAccountId,
@@ -3793,6 +3871,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
         amount: editData.amount,
         color: editData.color,
         recurrence: 'one-time',
+        moveWeekendToFriday: false,
         recurrenceEndDate: null,
         notes: editData.notes
       };
@@ -3818,6 +3897,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
             amount: -editData.amount,
             color: editData.color,
             recurrence: 'one-time',
+            moveWeekendToFriday: false,
             recurrenceEndDate: null,
             linkedTransactionId: newTxn.id,
             linkedAccountId: activeAccountId,

@@ -122,6 +122,7 @@ function initializeDatabase() {
         recurrence TEXT,
         excluded_dates TEXT,
         recurrence_end_date TEXT,
+        move_weekend_to_friday INTEGER,
         linked_transaction_id TEXT,
         linked_account_id TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -144,6 +145,12 @@ function initializeDatabase() {
     db.run('ALTER TABLE transactions ADD COLUMN recurrence_end_date TEXT', (err) => {
       if (err && !String(err.message || '').includes('duplicate column name')) {
         console.error('Error adding recurrence_end_date column:', err);
+      }
+    });
+
+    db.run('ALTER TABLE transactions ADD COLUMN move_weekend_to_friday INTEGER', (err) => {
+      if (err && !String(err.message || '').includes('duplicate column name')) {
+        console.error('Error adding move_weekend_to_friday column:', err);
       }
     });
 
@@ -224,6 +231,11 @@ async function migrateLegacySchema() {
   if (!transactionColumnNames.has('linked_account_id')) {
     await dbRun('ALTER TABLE transactions ADD COLUMN linked_account_id TEXT');
     console.log('Migration: added transactions.linked_account_id');
+  }
+
+  if (!transactionColumnNames.has('move_weekend_to_friday')) {
+    await dbRun('ALTER TABLE transactions ADD COLUMN move_weekend_to_friday INTEGER');
+    console.log('Migration: added transactions.move_weekend_to_friday');
   }
 
   const entryHistoryColumns = await dbAll('PRAGMA table_info(entry_histories)');
@@ -758,6 +770,7 @@ app.get('/api/accounts', requireAuth, async (req, res) => {
           color: txn.color || null,
           recurrence: txn.recurrence,
           recurrenceEndDate: txn.recurrence_end_date || null,
+          moveWeekendToFriday: txn.move_weekend_to_friday === 1,
           linkedTransactionId: txn.linked_transaction_id || null,
           linkedAccountId: txn.linked_account_id || null,
         }));
@@ -809,8 +822,8 @@ app.post('/api/accounts', requireAuth, async (req, res) => {
       for (const txn of account.transactions || []) {
         await dbRun(
           `INSERT OR REPLACE INTO transactions 
-           (id, account_id, date, payee, description, notes, amount, color, recurrence, excluded_dates, recurrence_end_date, linked_transaction_id, linked_account_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (id, account_id, date, payee, description, notes, amount, color, recurrence, excluded_dates, recurrence_end_date, move_weekend_to_friday, linked_transaction_id, linked_account_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             txn.id,
             account.id,
@@ -823,6 +836,7 @@ app.post('/api/accounts', requireAuth, async (req, res) => {
             txn.recurrence,
             JSON.stringify(Array.isArray(txn.excludedDates) ? txn.excludedDates : []),
             txn.recurrenceEndDate || null,
+            txn.moveWeekendToFriday ? 1 : 0,
             txn.linkedTransactionId,
             txn.linkedAccountId
           ]
@@ -856,8 +870,8 @@ app.post('/api/transactions', requireAuth, async (req, res) => {
     for (const txn of transactions) {
       await dbRun(
         `INSERT INTO transactions 
-         (id, account_id, date, payee, description, notes, amount, color, recurrence, excluded_dates, recurrence_end_date, linked_transaction_id, linked_account_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, account_id, date, payee, description, notes, amount, color, recurrence, excluded_dates, recurrence_end_date, move_weekend_to_friday, linked_transaction_id, linked_account_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           txn.id,
           accountId,
@@ -870,6 +884,7 @@ app.post('/api/transactions', requireAuth, async (req, res) => {
           txn.recurrence,
           JSON.stringify(Array.isArray(txn.excludedDates) ? txn.excludedDates : []),
           txn.recurrenceEndDate || null,
+          txn.moveWeekendToFriday ? 1 : 0,
           txn.linkedTransactionId,
           txn.linkedAccountId
         ]
