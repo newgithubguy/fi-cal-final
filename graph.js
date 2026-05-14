@@ -121,6 +121,28 @@ function navigateToCalendarDate(dateKey) {
   window.location.href = `index.html?date=${encodeURIComponent(dateKey)}`;
 }
 
+function moveDateToFridayIfWeekend(dateKey) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  if (date.getDay() === 6) {
+    date.setDate(date.getDate() - 1);
+    return toDateKey(date);
+  }
+  if (date.getDay() === 0) {
+    date.setDate(date.getDate() - 2);
+    return toDateKey(date);
+  }
+  return dateKey;
+}
+
+function normalizeMoveWeekendToFriday(value) {
+  if (value === true || value === 'true' || value === 1) return true;
+  return false;
+}
+
+function isRecurringRecurrence(recurrence) {
+  return recurrence && recurrence !== 'one-time';
+}
+
 function getNextRecurrenceDate(dateStr, recurrence, preferredDay = null) {
   const date = new Date(dateStr + 'T00:00:00');
   const anchorDay = preferredDay !== null ? preferredDay : date.getDate();
@@ -160,11 +182,18 @@ function expandRecurringTransactions(startDate, endDate) {
   const endKey = toDateKey(endDate);
 
   for (const txn of transactions) {
+    const shouldMoveWeekendToFriday = normalizeMoveWeekendToFriday(txn.moveWeekendToFriday) && isRecurringRecurrence(txn.recurrence);
     const excludedDates = new Set(Array.isArray(txn.excludedDates) ? txn.excludedDates : []);
     const recurrenceEndDate = typeof txn.recurrenceEndDate === 'string' ? txn.recurrenceEndDate : null;
+    const firstOccurrenceDate = shouldMoveWeekendToFriday ? moveDateToFridayIfWeekend(txn.date) : txn.date;
 
-    if (txn.date >= startKey && txn.date <= endKey && !excludedDates.has(txn.date)) {
-      expanded.push(txn);
+    if (
+      firstOccurrenceDate >= startKey
+      && firstOccurrenceDate <= endKey
+      && !excludedDates.has(firstOccurrenceDate)
+      && !excludedDates.has(txn.date)
+    ) {
+      expanded.push({ ...txn, date: firstOccurrenceDate });
     }
 
     if (txn.recurrence && txn.recurrence !== 'one-time') {
@@ -176,11 +205,18 @@ function expandRecurringTransactions(startDate, endDate) {
         if (!nextDate || nextDate > endKey) break;
         if (recurrenceEndDate && nextDate > recurrenceEndDate) break;
 
-        if (nextDate >= startKey && !excludedDates.has(nextDate)) {
+        const occurrenceDate = shouldMoveWeekendToFriday ? moveDateToFridayIfWeekend(nextDate) : nextDate;
+
+        if (
+          occurrenceDate >= startKey
+          && occurrenceDate <= endKey
+          && !excludedDates.has(occurrenceDate)
+          && !excludedDates.has(nextDate)
+        ) {
           expanded.push({
             ...txn,
             id: `${txn.id}-recur-${nextDate}`,
-            date: nextDate,
+            date: occurrenceDate,
             isRecurring: true,
             originalId: txn.id,
           });
