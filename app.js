@@ -3417,9 +3417,10 @@ function applyFieldValidationState({ input, hint, message }) {
 function populateYearSelect() {
   const currentYear = new Date().getFullYear();
   const years = new Set();
+  const maxYear = 2299;
   
-  // Add years from current - 5 to current + 3
-  for (let i = currentYear - 5; i <= currentYear + 3; i++) {
+  // Add years from current - 5 through configured maximum year
+  for (let i = currentYear - 5; i <= maxYear; i++) {
     years.add(i);
   }
   

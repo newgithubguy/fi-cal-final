@@ -340,9 +340,10 @@ function prepareMonthCategoryData(year, month) {
 function populateYearSelect() {
   const years = new Set();
   const currentYear = new Date().getFullYear();
+  const maxYear = 2299;
   
-  // Add current year and nearby years
-  for (let i = currentYear - 5; i <= currentYear + 1; i++) {
+  // Add current year range through configured maximum year
+  for (let i = currentYear - 5; i <= maxYear; i++) {
     years.add(i);
   }
   
