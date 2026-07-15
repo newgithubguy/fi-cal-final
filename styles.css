@@ -23,6 +23,12 @@
   --danger-soft: #f4ddd7;
   --danger-border: #d7aba1;
   --shadow: rgba(11, 29, 37, 0.16);
+  --space-1: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --control-height: 34px;
 }
 
 * {
@@ -45,7 +51,7 @@ body {
   width: 250px;
   background: var(--card);
   border-right: 2px solid var(--border);
-  padding: 16px;
+  padding: var(--space-4);
   overflow-y: auto;
   flex-shrink: 0;
   display: flex;
@@ -60,7 +66,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .accounts-header h2 {
@@ -359,19 +365,19 @@ body {
 
 .app {
   flex: 1;
-  padding: 24px 16px;
+  padding: 20px var(--space-4);
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
   overflow-y: auto;
   min-width: 0;
   justify-items: center;
 }
 
 .transactions-sidebar {
-  width: 340px;
+  width: 330px;
   background: var(--card);
   border-left: 2px solid var(--border);
-  padding: 16px;
+  padding: var(--space-4);
   overflow-y: auto;
   flex-shrink: 0;
   display: flex;
@@ -461,7 +467,7 @@ body {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 16px;
+  padding: 14px;
   max-width: 1100px;
   width: 100%;
   box-shadow: 0 10px 24px var(--shadow);
@@ -683,19 +689,19 @@ body {
 .grid {
   min-height: 420px;
   background: rgba(248, 244, 232, 0.42);
-  padding: 8px;
+  padding: var(--space-2);
   border-radius: 10px;
 }
 
 .day {
-  border: 1px solid var(--border);
+  border: 1px solid rgba(217, 199, 164, 0.72);
   border-radius: 10px;
-  padding: 8px;
+  padding: 7px;
   min-height: 100px;
   background: var(--surface-soft);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
 .day.odd-day {
@@ -734,12 +740,12 @@ body {
 }
 
 .selected-day:not(.today) {
-  border-color: var(--accent);
+  border-color: var(--accent-strong);
   background: #ffffff;
 }
 
 .weekend-day {
-  box-shadow: inset 0 0 0 3px var(--text);
+  box-shadow: inset 0 0 0 2px rgba(24, 48, 56, 0.72);
 }
 
 .calendar-workspace {
@@ -869,9 +875,9 @@ body {
 }
 
 .today {
-  border: 3px solid var(--accent-strong);
+  border: 2px solid var(--accent-strong);
   background: #fff8eb;
-  box-shadow: 0 0 12px rgba(222, 169, 74, 0.35), 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 8px rgba(222, 169, 74, 0.3), 0 3px 6px rgba(0, 0, 0, 0.08);
   font-weight: 600;
 }
 
@@ -1040,14 +1046,14 @@ body {
 .transaction-form button {
   background: var(--accent);
   color: var(--accent-contrast);
-  border: none;
+  min-height: var(--control-height);
   cursor: pointer;
 }
 
 .transfer-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+    gap: var(--space-2);
 }
 
 .checkbox-label {
@@ -1056,7 +1062,7 @@ body {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  font-weight: 500;
+    min-height: var(--control-height);
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -1066,7 +1072,7 @@ body {
   margin: 0;
 }
 
-.hidden {
+    min-height: var(--control-height);
   display: none !important;
 }
 
@@ -1076,11 +1082,11 @@ body {
   gap: 4px;
   font-size: 0.75rem;
   color: var(--accent);
-  background: var(--accent-soft);
+    min-height: var(--control-height);
   padding: 2px 8px;
   border-radius: 12px;
   margin-left: 4px;
-  font-weight: 600;
+    min-width: 210px;
 }
 
 .linked-indicator::before {
@@ -1089,26 +1095,31 @@ body {
 }
 
 .list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2);
+  align-items: start;
+}
+
+.list-header h3 {
+  margin: 0;
 }
 
 .transaction-list {
   list-style: none;
-  margin: 12px 0 0;
+  margin: var(--space-3) 0 0;
   padding: 0;
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .transaction-list li {
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 10px;
+  padding: 8px;
   display: grid;
-  grid-template-columns: 90px 120px 100px 1fr 1fr 100px auto auto;
-  gap: 8px;
+  grid-template-columns: 86px 110px 92px minmax(140px, 1.1fr) minmax(120px, 0.9fr) 95px auto auto;
+  gap: 6px;
   align-items: center;
 }
 
@@ -1129,8 +1140,11 @@ body {
 
 .notes {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .danger {
@@ -1143,7 +1157,8 @@ body {
 .edit-btn {
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 4px 8px;
+  min-height: 30px;
+  padding: 4px 7px;
   cursor: pointer;
   background: var(--surface);
 }
@@ -1484,15 +1499,19 @@ body {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 12px;
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .notepad-header {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  z-index: 1;
 }
 
 .notepad-header h3 {
@@ -1510,7 +1529,7 @@ body {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 6px;
+  gap: var(--space-1);
   max-height: 180px;
   overflow-y: auto;
 }
@@ -1545,9 +1564,60 @@ body {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 6px;
+  gap: var(--space-1);
   max-height: 220px;
   overflow-y: auto;
+}
+
+.transactions-sidebar #transactionsWindow {
+  display: flex;
+  flex-direction: column;
+}
+
+.transactions-sidebar .list-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--card);
+  padding-bottom: var(--space-2);
+}
+
+.transactions-sidebar #transactionsWindow .transaction-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+@media (max-width: 1280px) {
+  .accounts-sidebar {
+    width: 230px;
+  }
+
+  .transactions-sidebar {
+    width: 300px;
+  }
+
+  .app {
+    padding: var(--space-4) var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .month-controls {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .month-controls-left,
+  .current-account-inline,
+  .top-links-group {
+    justify-self: stretch;
+  }
+
+  .current-account-inline {
+    align-items: flex-start;
+    text-align: left;
+    min-width: 0;
+  }
 }
 
 .selected-day-transaction {
