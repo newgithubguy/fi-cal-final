@@ -522,7 +522,7 @@ if (panelBottomBtn) {
   });
 }
 
-setPanelLayout("bottom");
+setPanelLayout("right");
 
 let pendingEditData = null;
 
@@ -2702,26 +2702,21 @@ if (firstNegativeBalanceBtn) {
 function renderTransactions() {
   transactionList.innerHTML = "";
   const normalizedSearchTerm = (transactionSearchInput?.value || "").trim().toLowerCase();
-  const isSearchingWholeCalendar = Boolean(normalizedSearchTerm);
+  const monthLabel = currentMonth.toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
+  transactionListTitle.textContent = `Transactions - ${monthLabel}`;
 
-  if (isSearchingWholeCalendar) {
-    transactionListTitle.textContent = "Transactions - Search Results";
-  } else if (selectedDateKey) {
-    transactionListTitle.textContent = `Transactions - ${selectedDateKey}`;
-  } else {
-    transactionListTitle.textContent = "Transactions";
-  }
-
-  const sourceItems = isSearchingWholeCalendar
-    ? getAllCalendarTransactionsForSearch()
-    : getTransactionsForDateKey(selectedDateKey);
-
-  const visibleItems = isSearchingWholeCalendar
+  const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+  const sourceItems = sortTransactions(expandRecurringTransactions(monthStart, monthEnd));
+  const visibleItems = normalizedSearchTerm
     ? sourceItems.filter((item) => matchesTransactionSearch(item, normalizedSearchTerm))
     : sourceItems;
 
   if (transactionSearchCount) {
-    if (isSearchingWholeCalendar) {
+    if (normalizedSearchTerm) {
       const matchLabel = visibleItems.length === 1 ? "match" : "matches";
       transactionSearchCount.textContent = `${visibleItems.length} ${matchLabel}`;
       transactionSearchCount.classList.remove("hidden");
@@ -2733,11 +2728,7 @@ function renderTransactions() {
 
   if (!sourceItems.length) {
     const empty = document.createElement("li");
-    empty.textContent = isSearchingWholeCalendar
-      ? "No transactions available to search."
-      : selectedDateKey
-        ? `No transactions for ${selectedDateKey}.`
-        : "No transactions for this month yet.";
+    empty.textContent = `No transactions for ${monthLabel}.`;
     transactionList.appendChild(empty);
     return;
   }
