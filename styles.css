@@ -363,32 +363,8 @@ body {
   display: grid;
   gap: 16px;
   overflow-y: auto;
-  min-width: 0;
-  justify-items: center;
-}
-
-.transactions-sidebar {
-  width: 340px;
-  background: var(--card);
-  border-left: 2px solid var(--border);
-  padding: 16px;
-  overflow-y: auto;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 0;
-  max-height: 100vh;
-  box-shadow: -12px 0 24px var(--shadow);
-}
-
-.transactions-sidebar-card {
   width: 100%;
-  min-height: calc(100vh - 32px);
-}
-
-.transactions-sidebar #transactionsWindow .transaction-list {
-  max-height: calc(100vh - 210px);
+  justify-items: center;
 }
 
 .topbar {
@@ -2271,23 +2247,6 @@ body {
     border-bottom: 2px solid var(--border);
     max-height: none;
     position: static;
-  }
-
-  .transactions-sidebar {
-    width: 100%;
-    border-left: none;
-    border-top: 2px solid var(--border);
-    max-height: none;
-    position: static;
-    box-shadow: none;
-  }
-
-  .transactions-sidebar-card {
-    min-height: 0;
-  }
-
-  .transactions-sidebar #transactionsWindow .transaction-list {
-    max-height: none;
   }
 
   .chart-container {

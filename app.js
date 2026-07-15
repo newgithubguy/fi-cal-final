@@ -522,7 +522,7 @@ if (panelBottomBtn) {
   });
 }
 
-setPanelLayout("bottom");
+setPanelLayout("right");
 
 let pendingEditData = null;
 
