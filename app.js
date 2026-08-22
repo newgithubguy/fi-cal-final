@@ -488,7 +488,7 @@ function applyPanelLayout(layout) {
 }
 
 function setPanelLayout(layout) {
-  const normalizedLayout = layout === "left" || layout === "bottom" ? layout : "right";
+  const normalizedLayout = layout === "left" ? "left" : "right";
   applyPanelLayout(normalizedLayout);
 
   try {
@@ -501,7 +501,7 @@ function setPanelLayout(layout) {
 function getSavedPanelLayout() {
   try {
     const savedLayout = localStorage.getItem(PANEL_LAYOUT_STORAGE_KEY);
-    if (savedLayout === "left" || savedLayout === "right" || savedLayout === "bottom") {
+    if (savedLayout === "left" || savedLayout === "right") {
       return savedLayout;
     }
     return "right";
