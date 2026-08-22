@@ -131,6 +131,7 @@
           <a href="graph.html" class="graph-link">📊 Graph</a>
           <a href="categories.html" class="graph-link">📂 Categories</a>
           <a href="/admin" id="adminConsoleLink" class="graph-link" hidden>👥 Admin</a>
+          <button id="toggleRightPanelBtn" type="button" class="sidebar-toggle-btn" aria-expanded="true" title="Hide right panel">▣</button>
         </div>
       </div>
 
@@ -264,6 +265,16 @@
             </div>
           </div>
           <ul id="transactionList" class="transaction-list"></ul>
+        </section>
+
+        <section id="currentMonthTransactionsWindow" class="card resizable-window current-month-sidebar">
+          <div class="list-header month-panel-header">
+            <h3 id="currentMonthTransactionsTitle">Current Month Transactions</h3>
+            <button id="currentMonthTransactionsToggle" type="button" class="sidebar-toggle" aria-expanded="true" aria-label="Collapse current month transactions">−</button>
+          </div>
+          <div id="currentMonthTransactionsBody" class="current-month-transactions-body">
+            <ul id="currentMonthTransactionList" class="month-transaction-list"></ul>
+          </div>
         </section>
       </div>
     </section>

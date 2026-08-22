@@ -42,6 +42,10 @@ const weekendMoveToFridayInput = document.getElementById("weekendMoveToFridayInp
 const weekendMoveToFridayLabel = document.getElementById("weekendMoveToFridayLabel");
 const transactionList = document.getElementById("transactionList");
 const transactionListTitle = document.getElementById("transactionListTitle");
+const currentMonthTransactionList = document.getElementById("currentMonthTransactionList");
+const currentMonthTransactionsTitle = document.getElementById("currentMonthTransactionsTitle");
+const currentMonthTransactionsBody = document.getElementById("currentMonthTransactionsBody");
+const currentMonthTransactionsToggle = document.getElementById("currentMonthTransactionsToggle");
 const transactionSearchInput = document.getElementById("transactionSearchInput");
 const transactionSearchCount = document.getElementById("transactionSearchCount");
 const monthChangeDisplay = document.getElementById("monthChangeDisplay");
@@ -53,6 +57,7 @@ const firstNegativeBalanceDisplay = document.getElementById("firstNegativeBalanc
 const startingBalanceDisplay = document.getElementById("startingBalanceDisplay");
 const calendarWorkspace = document.getElementById("calendarWorkspace");
 const workspacePanels = document.getElementById("workspacePanels");
+const toggleRightPanelBtn = document.getElementById("toggleRightPanelBtn");
 const calendarWindow = document.getElementById("calendarWindow");
 const calendarDragHandle = document.getElementById("calendarDragHandle");
 const panelDragHandle = document.getElementById("panelDragHandle");
@@ -121,6 +126,7 @@ const calculatorToggle = document.getElementById("calculatorToggle");
 const calculatorBody = document.getElementById("calculatorBody");
 const graphLink = document.querySelector(".graph-link");
 const PANEL_LAYOUT_STORAGE_KEY = "finance-calendar-panel-layout";
+const RIGHT_PANEL_VISIBILITY_KEY = "finance-calendar-right-panel-visible";
 const MANUAL_TRANSACTION_NOTEPAD_KEY = "finance-calendar-manual-transactions-notepad";
 const ACCOUNT_QUICK_NOTES_KEY = "finance-calendar-account-quick-notes";
 const DEFAULT_TRANSACTION_COLOR = "#3b82f6";
@@ -504,6 +510,37 @@ function getSavedPanelLayout() {
   }
 }
 
+function applyRightPanelVisibility(visible) {
+  if (!calendarWorkspace || !workspacePanels || !toggleRightPanelBtn) {
+    return;
+  }
+
+  const shouldShow = Boolean(visible);
+  calendarWorkspace.classList.toggle("panel-hidden", !shouldShow);
+  workspacePanels.classList.toggle("hidden", !shouldShow);
+  toggleRightPanelBtn.textContent = shouldShow ? "▣" : "▢";
+  toggleRightPanelBtn.setAttribute("aria-expanded", String(shouldShow));
+  toggleRightPanelBtn.title = shouldShow ? "Hide right panel" : "Show right panel";
+
+  try {
+    localStorage.setItem(RIGHT_PANEL_VISIBILITY_KEY, String(shouldShow));
+  } catch {
+    // Ignore localStorage failures.
+  }
+}
+
+function getSavedRightPanelVisibility() {
+  try {
+    const savedValue = localStorage.getItem(RIGHT_PANEL_VISIBILITY_KEY);
+    if (savedValue === "false") {
+      return false;
+    }
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 if (panelLeftBtn) {
   panelLeftBtn.addEventListener("click", () => {
     setPanelLayout("left");
@@ -522,7 +559,24 @@ if (panelBottomBtn) {
   });
 }
 
-setPanelLayout("bottom");
+if (toggleRightPanelBtn) {
+  toggleRightPanelBtn.addEventListener("click", () => {
+    const nextState = !workspacePanels?.classList.contains("hidden");
+    applyRightPanelVisibility(!nextState);
+  });
+}
+
+setPanelLayout(getSavedPanelLayout());
+applyRightPanelVisibility(getSavedRightPanelVisibility());
+
+if (currentMonthTransactionsToggle && currentMonthTransactionsBody) {
+  currentMonthTransactionsToggle.addEventListener("click", () => {
+    const isCollapsed = currentMonthTransactionsBody.classList.toggle("hidden");
+    currentMonthTransactionsToggle.textContent = isCollapsed ? "+" : "−";
+    currentMonthTransactionsToggle.setAttribute("aria-expanded", String(!isCollapsed));
+    currentMonthTransactionsToggle.setAttribute("aria-label", isCollapsed ? "Expand current month transactions" : "Collapse current month transactions");
+  });
+}
 
 let pendingEditData = null;
 
@@ -2825,6 +2879,66 @@ function renderTransactions() {
   }
 }
 
+function renderCurrentMonthTransactions() {
+  if (!currentMonthTransactionList) {
+    return;
+  }
+
+  const monthName = currentMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  if (currentMonthTransactionsTitle) {
+    currentMonthTransactionsTitle.textContent = `${monthName} Transactions`;
+  }
+
+  const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+  const startKey = toDateKey(monthStart);
+  const endKey = toDateKey(monthEnd);
+
+  const visibleItems = expandRecurringTransactions(monthStart, monthEnd)
+    .filter((item) => item.date >= startKey && item.date <= endKey)
+    .sort((a, b) => a.date.localeCompare(b.date) || a.description.localeCompare(b.description));
+
+  currentMonthTransactionList.innerHTML = "";
+
+  if (!visibleItems.length) {
+    const empty = document.createElement("li");
+    empty.className = "month-transaction-empty";
+    empty.textContent = "No transactions for this month.";
+    currentMonthTransactionList.appendChild(empty);
+    return;
+  }
+
+  visibleItems.forEach((item) => {
+    const row = document.createElement("li");
+    row.className = "current-month-transaction";
+    row.tabIndex = 0;
+    row.title = `Jump to ${item.date}`;
+
+    const date = document.createElement("span");
+    date.className = "month-transaction-date";
+    date.textContent = item.date.slice(5);
+
+    const description = document.createElement("span");
+    description.className = "month-transaction-description";
+    description.textContent = item.description || "Transaction";
+
+    const amount = document.createElement("strong");
+    amount.className = item.amount >= 0 ? "positive" : "negative";
+    amount.textContent = formatCurrency(item.amount);
+
+    row.append(date, description, amount);
+    row.addEventListener("click", () => navigateToTransactionDate(item.date));
+    row.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        navigateToTransactionDate(item.date);
+      }
+    });
+
+    currentMonthTransactionList.appendChild(row);
+  });
+}
+
 function matchesTransactionSearch(item, searchTerm) {
   if (!searchTerm) {
     return true;
@@ -2894,6 +3008,7 @@ function updateCurrentAccountFieldColor(activeAccount) {
 function render() {
   renderCalendar();
   renderTransactions();
+  renderCurrentMonthTransactions();
   renderSelectedDayTransactionsNotepad();
   renderAccounts();
 }
