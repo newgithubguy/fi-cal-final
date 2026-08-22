@@ -97,6 +97,8 @@ const editRecurrenceEndDateLabel = document.getElementById("editRecurrenceEndDat
 const editWeekendMoveToFridayInput = document.getElementById("editWeekendMoveToFridayInput");
 const editWeekendMoveToFridayLabel = document.getElementById("editWeekendMoveToFridayLabel");
 const editNotesInput = document.getElementById("editNotesInput");
+const editAccountInput = document.getElementById("editAccountInput");
+const editAccountLabel = document.getElementById("editAccountLabel");
 const editCancel = document.getElementById("editCancel");
 const editRecurringModal = document.getElementById("editRecurringModal");
 const editAllOccurrencesBtn = document.getElementById("editAllOccurrencesBtn");
@@ -390,6 +392,7 @@ currentMonth.setDate(1);
 let selectedDateKey = toDateKey(new Date());
 let editingTransactionId = null;
 let editingOccurrenceDate = null;
+let editingTransactionAccountId = null;
 
 function isRecurringRecurrence(value) {
   return Boolean(value) && value !== "one-time" && value !== "none";
@@ -1055,7 +1058,11 @@ if (isTransferInput) {
 if (editIsTransferInput) {
   editIsTransferInput.addEventListener("change", () => {
     if (editIsTransferInput.checked) {
-      updateTransferAccountOptions(editTransferAccountInput, editTransferAccountLabel);
+      updateTransferAccountOptions(
+        editTransferAccountInput,
+        editTransferAccountLabel,
+        editAccountInput ? editAccountInput.value : activeAccountId
+      );
       editTransferAccountLabel.classList.remove("hidden");
     } else {
       editTransferAccountLabel.classList.add("hidden");
@@ -1358,6 +1365,16 @@ if (editTransactionTypeInput) {
   updateTransactionTypeSelectColor(editTransactionTypeInput);
   editTransactionTypeInput.addEventListener("change", () => {
     updateTransactionTypeSelectColor(editTransactionTypeInput);
+  });
+}
+
+if (editAccountInput) {
+  editAccountInput.addEventListener("change", () => {
+    updateTransferAccountOptions(
+      editTransferAccountInput,
+      editTransferAccountLabel,
+      editAccountInput.value || activeAccountId
+    );
   });
 }
 
@@ -3099,7 +3116,11 @@ function renderAccounts() {
   });
 
   updateTransferAccountOptions(transferAccountInput, transferAccountLabel);
-  updateTransferAccountOptions(editTransferAccountInput, editTransferAccountLabel);
+  updateTransferAccountOptions(
+    editTransferAccountInput,
+    editTransferAccountLabel,
+    editAccountInput ? editAccountInput.value : activeAccountId
+  );
 }
 
 function switchAccount(accountId) {
@@ -3286,19 +3307,42 @@ async function deleteAllData() {
 }
 
 
-function updateTransferAccountOptions(selectElement, labelElement) {
+function updateAccountOptions(selectElement, selectedAccountId = activeAccountId) {
   if (!selectElement) return;
-  
+
+  const previousValue = selectElement.value;
+  selectElement.innerHTML = '';
+
+  accounts.forEach((account) => {
+    const option = document.createElement('option');
+    option.value = account.id;
+    option.textContent = account.name;
+    selectElement.appendChild(option);
+  });
+
+  selectElement.value = selectedAccountId || previousValue || '';
+}
+
+function updateTransferAccountOptions(selectElement, labelElement, excludedAccountId = activeAccountId) {
+  if (!selectElement) return;
+
+  const previousValue = selectElement.value;
   selectElement.innerHTML = '';
   
   accounts.forEach(account => {
-    if (account.id !== activeAccountId) {
+    if (account.id !== excludedAccountId) {
       const option = document.createElement('option');
       option.value = account.id;
       option.textContent = account.name;
       selectElement.appendChild(option);
     }
   });
+
+  if (previousValue && Array.from(selectElement.options).some((option) => option.value === previousValue)) {
+    selectElement.value = previousValue;
+  } else {
+    selectElement.value = '';
+  }
 }
 
 function deleteLinkedTransaction(linkedTransactionId, linkedAccountId) {
@@ -3311,7 +3355,7 @@ function deleteLinkedTransaction(linkedTransactionId, linkedAccountId) {
   }
 }
 
-function updateLinkedTransaction(txn) {
+function updateLinkedTransaction(txn, linkedOwnerAccountId = activeAccountId) {
   if (!txn.linkedTransactionId || !txn.linkedAccountId) return;
   
   const linkedAccount = accounts.find(acc => acc.id === txn.linkedAccountId);
@@ -3329,6 +3373,7 @@ function updateLinkedTransaction(txn) {
       linkedTxn.recurrence = txn.recurrence;
       linkedTxn.recurrenceEndDate = txn.recurrenceEndDate || null;
       linkedTxn.moveWeekendToFriday = normalizeMoveWeekendToFriday(txn.moveWeekendToFriday);
+      linkedTxn.linkedAccountId = linkedOwnerAccountId;
       saveAccounts();
     }
   }
@@ -3554,6 +3599,7 @@ function populateYearSelect() {
 function openEditTransactionModal(transactionId, sourceItem = null) {
   const resolvedTransactionId = resolveBaseTransactionId(transactionId);
   editingTransactionId = resolvedTransactionId;
+  editingTransactionAccountId = activeAccountId;
   
   // Find the transaction to edit
   const txn = transactions.find(t => t.id === resolvedTransactionId);
@@ -3587,17 +3633,20 @@ function openEditTransactionModal(transactionId, sourceItem = null) {
   updateEditRecurrenceEndDateFieldVisibility();
   setEditRecurrenceEndDateValidationHint();
   editNotesInput.value = txn.notes || '';
+    if (editAccountInput) {
+      updateAccountOptions(editAccountInput, activeAccountId);
+    }
   
-  // Handle transfer fields
-  const isLinked = Boolean(txn.linkedTransactionId && txn.linkedAccountId);
-  editIsTransferInput.checked = isLinked;
-  if (isLinked) {
-    updateTransferAccountOptions(editTransferAccountInput, editTransferAccountLabel);
-    editTransferAccountInput.value = txn.linkedAccountId;
-    editTransferAccountLabel.classList.remove('hidden');
-  } else {
-    editTransferAccountLabel.classList.add('hidden');
-  }
+    // Handle transfer fields
+    const isLinked = Boolean(txn.linkedTransactionId && txn.linkedAccountId);
+    editIsTransferInput.checked = isLinked;
+    if (isLinked) {
+      updateTransferAccountOptions(editTransferAccountInput, editTransferAccountLabel, editAccountInput ? editAccountInput.value : activeAccountId);
+      editTransferAccountInput.value = txn.linkedAccountId;
+      editTransferAccountLabel.classList.remove('hidden');
+    } else {
+      editTransferAccountLabel.classList.add('hidden');
+    }
   
   editTransactionModal.hidden = false;
   editTransactionModal.setAttribute('aria-hidden', 'false');
@@ -3607,11 +3656,15 @@ function openEditTransactionModal(transactionId, sourceItem = null) {
 function closeEditTransactionModal(options = {}) {
   const keepEditingTransactionId = Boolean(options.keepEditingTransactionId);
   const keepEditingOccurrenceDate = Boolean(options.keepEditingOccurrenceDate);
+  const keepEditingAccountId = Boolean(options.keepEditingAccountId);
   if (!keepEditingTransactionId) {
     editingTransactionId = null;
   }
   if (!keepEditingOccurrenceDate) {
     editingOccurrenceDate = null;
+  }
+  if (!keepEditingAccountId) {
+    editingTransactionAccountId = null;
   }
   editTransactionModal.hidden = true;
   editTransactionModal.setAttribute('aria-hidden', 'true');
@@ -3687,12 +3740,18 @@ editTransactionForm.addEventListener("submit", (event) => {
     notes: editNotesInput.value.trim(),
     isTransfer: editIsTransferInput.checked,
     transferToAccountId: editTransferAccountInput.value,
+    accountId: editAccountInput ? editAccountInput.value : activeAccountId,
+    sourceAccountId: editingTransactionAccountId || activeAccountId,
     wasLinked: Boolean(txn.linkedTransactionId && txn.linkedAccountId)
   };
 
   // If recurring, show the modal to ask how to apply changes
   if (isRecurring) {
-    closeEditTransactionModal({ keepEditingTransactionId: true, keepEditingOccurrenceDate: true });
+    closeEditTransactionModal({
+      keepEditingTransactionId: true,
+      keepEditingOccurrenceDate: true,
+      keepEditingAccountId: true
+    });
     editRecurringModal.hidden = false;
     editRecurringModal.setAttribute('aria-hidden', 'false');
     return;
@@ -3737,6 +3796,29 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
   const wasLinked = editData.wasLinked;
   const isTransfer = editData.isTransfer;
   const transferToAccountId = editData.transferToAccountId;
+  const sourceAccountId = editData.sourceAccountId || activeAccountId;
+  const targetAccountId = editData.accountId || sourceAccountId;
+  const sourceAccount = accounts.find((acc) => acc.id === sourceAccountId);
+  const targetAccount = accounts.find((acc) => acc.id === targetAccountId);
+
+  if (!sourceAccount || !targetAccount) {
+    alert("Please select a valid account.");
+    return;
+  }
+
+  const moveEditedTransaction = (editedTxn) => {
+    if (sourceAccountId === targetAccountId) {
+      return;
+    }
+
+    transactions = transactions.filter((item) => item.id !== editedTxn.id);
+    sourceAccount.transactions = (sourceAccount.transactions || []).filter((item) => item.id !== editedTxn.id);
+    targetAccount.transactions = targetAccount.transactions || [];
+    if (!targetAccount.transactions.some((item) => item.id === editedTxn.id)) {
+      targetAccount.transactions.push(editedTxn);
+    }
+    saveAccounts();
+  };
   
   // If applyToAll is true and it's a recurring transaction, update the base transaction
   // which will affect all future generated instances
@@ -3803,7 +3885,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
               recurrence: editData.recurrence,
               moveWeekendToFriday: editData.moveWeekendToFriday,
               linkedTransactionId: futureTxn.id,
-              linkedAccountId: activeAccountId,
+              linkedAccountId: targetAccountId,
               excludedDates: [],
               recurrenceEndDate: editData.recurrenceEndDate,
             };
@@ -3813,7 +3895,13 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
           }
         }
 
-        transactions.push(futureTxn);
+        if (sourceAccountId === targetAccountId) {
+          transactions.push(futureTxn);
+        } else {
+          targetAccount.transactions = targetAccount.transactions || [];
+          targetAccount.transactions.push(futureTxn);
+          saveAccounts();
+        }
       } else {
       // Handle unlinking
       if (wasLinked && !isTransfer) {
@@ -3846,7 +3934,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
             moveWeekendToFriday: editData.moveWeekendToFriday,
             recurrenceEndDate: editData.recurrenceEndDate,
             linkedTransactionId: baseTxn.id,
-            linkedAccountId: activeAccountId,
+            linkedAccountId: targetAccountId,
           };
           targetAccount.transactions = targetAccount.transactions || [];
           targetAccount.transactions.push(linkedTransaction);
@@ -3876,7 +3964,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
             moveWeekendToFriday: editData.moveWeekendToFriday,
             recurrenceEndDate: editData.recurrenceEndDate,
             linkedTransactionId: baseTxn.id,
-            linkedAccountId: activeAccountId,
+            linkedAccountId: targetAccountId,
           };
           targetAccount.transactions = targetAccount.transactions || [];
           targetAccount.transactions.push(linkedTransaction);
@@ -3894,14 +3982,126 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
       baseTxn.recurrenceEndDate = editData.recurrenceEndDate;
       baseTxn.moveWeekendToFriday = editData.moveWeekendToFriday;
       baseTxn.notes = editData.notes;
+      moveEditedTransaction(baseTxn);
       
       // Update linked transaction if it exists
       if (baseTxn.linkedTransactionId && baseTxn.linkedAccountId) {
-        updateLinkedTransaction(baseTxn);
+        updateLinkedTransaction(baseTxn, targetAccountId);
       }
       }
     }
   } else {
+    const isRecurringSeries = txn.recurrence && txn.recurrence !== 'one-time' && txn.recurrence !== 'none';
+
+    if (!isRecurringSeries) {
+      const previousLinkedTransactionId = txn.linkedTransactionId;
+      const previousLinkedAccountId = txn.linkedAccountId;
+
+      txn.date = editData.date;
+      txn.payee = editData.payee;
+      txn.description = editData.description;
+      txn.amount = editData.amount;
+      txn.color = editData.color;
+      txn.notes = editData.notes;
+
+      if (wasLinked && !isTransfer) {
+        deleteLinkedTransaction(previousLinkedTransactionId, previousLinkedAccountId);
+        txn.linkedTransactionId = null;
+        txn.linkedAccountId = null;
+      }
+
+      if (!wasLinked && isTransfer) {
+        if (!transferToAccountId) {
+          alert("Please select an account to transfer to.");
+          return;
+        }
+
+        const linkedId = generateUuid();
+        txn.linkedTransactionId = linkedId;
+        txn.linkedAccountId = transferToAccountId;
+
+        const transferTargetAccount = accounts.find(acc => acc.id === transferToAccountId);
+        if (transferTargetAccount) {
+          const linkedTransaction = {
+            id: linkedId,
+            date: editData.date,
+            description: editData.description,
+            payee: editData.payee,
+            notes: editData.notes,
+            amount: -editData.amount,
+            color: editData.color,
+            recurrence: 'one-time',
+            moveWeekendToFriday: false,
+            recurrenceEndDate: null,
+            linkedTransactionId: txn.id,
+            linkedAccountId: targetAccountId,
+          };
+          transferTargetAccount.transactions = transferTargetAccount.transactions || [];
+          transferTargetAccount.transactions.push(linkedTransaction);
+          saveAccounts();
+        }
+      }
+
+      if (wasLinked && isTransfer && previousLinkedAccountId !== transferToAccountId) {
+        deleteLinkedTransaction(previousLinkedTransactionId, previousLinkedAccountId);
+
+        const linkedId = generateUuid();
+        txn.linkedTransactionId = linkedId;
+        txn.linkedAccountId = transferToAccountId;
+
+        const transferTargetAccount = accounts.find(acc => acc.id === transferToAccountId);
+        if (transferTargetAccount) {
+          const linkedTransaction = {
+            id: linkedId,
+            date: editData.date,
+            description: editData.description,
+            payee: editData.payee,
+            notes: editData.notes,
+            amount: -editData.amount,
+            color: editData.color,
+            recurrence: 'one-time',
+            moveWeekendToFriday: false,
+            recurrenceEndDate: null,
+            linkedTransactionId: txn.id,
+            linkedAccountId: targetAccountId,
+          };
+          transferTargetAccount.transactions = transferTargetAccount.transactions || [];
+          transferTargetAccount.transactions.push(linkedTransaction);
+          saveAccounts();
+        }
+      }
+
+      if (wasLinked && isTransfer && previousLinkedAccountId === transferToAccountId) {
+        txn.linkedTransactionId = previousLinkedTransactionId;
+        txn.linkedAccountId = previousLinkedAccountId;
+      }
+
+      if (sourceAccountId !== targetAccountId) {
+        transactions = transactions.filter((item) => item.id !== txn.id);
+        sourceAccount.transactions = (sourceAccount.transactions || []).filter((item) => item.id !== txn.id);
+        targetAccount.transactions = targetAccount.transactions || [];
+        if (!targetAccount.transactions.some((item) => item.id === txn.id)) {
+          targetAccount.transactions.push(txn);
+        }
+        saveAccounts();
+      }
+
+      if (txn.linkedTransactionId && txn.linkedAccountId) {
+        updateLinkedTransaction(txn, targetAccountId);
+      }
+
+      if (editData.payee) payeeHistory = addToHistory(editData.payee, payeeHistory);
+      if (editData.description) descriptionHistory = addToHistory(editData.description, descriptionHistory);
+      if (Math.abs(editData.amount) > 0) amountHistory = addToHistory(formatAmountForHistory(editData.amount), amountHistory);
+      saveEntryHistories();
+
+      commitTransactions(transactions);
+      closeEditTransactionModal();
+      showToast({ message: "Transaction updated successfully.", type: "success" });
+      pendingEditData = null;
+      return;
+    }
+
     // Apply to this occurrence only - create exclusion for recurring instances
     if (txn.isRecurringInstance) {
       // Find the base transaction
@@ -3956,15 +4156,21 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
             moveWeekendToFriday: false,
             recurrenceEndDate: null,
             linkedTransactionId: newTxn.id,
-            linkedAccountId: activeAccountId,
+            linkedAccountId: targetAccountId,
           };
           targetAccount.transactions = targetAccount.transactions || [];
           targetAccount.transactions.push(linkedTransaction);
           saveAccounts();
         }
       }
-      
-      transactions.push(newTxn);
+
+      if (sourceAccountId === targetAccountId) {
+        transactions.push(newTxn);
+      } else {
+        targetAccount.transactions = targetAccount.transactions || [];
+        targetAccount.transactions.push(newTxn);
+        saveAccounts();
+      }
     } else {
       // It's a base recurring transaction - for "this occurrence only":
       // exclude this occurrence date and create a new one-time transaction,
@@ -4016,7 +4222,7 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
             moveWeekendToFriday: false,
             recurrenceEndDate: null,
             linkedTransactionId: newTxn.id,
-            linkedAccountId: activeAccountId,
+            linkedAccountId: targetAccountId,
           };
           targetAccount.transactions = targetAccount.transactions || [];
           targetAccount.transactions.push(linkedTransaction);
@@ -4024,7 +4230,13 @@ function applyEditToTransaction(transactionId, editData, applyToAll) {
         }
       }
 
-      transactions.push(newTxn);
+      if (sourceAccountId === targetAccountId) {
+        transactions.push(newTxn);
+      } else {
+        targetAccount.transactions = targetAccount.transactions || [];
+        targetAccount.transactions.push(newTxn);
+        saveAccounts();
+      }
     }
   }
   
@@ -4132,7 +4344,14 @@ async function initialize() {
     updateRecurrenceEndDateFieldVisibility();
     setRecurrenceEndDateValidationHint();
     if (transferAccountInput) updateTransferAccountOptions(transferAccountInput, transferAccountLabel);
-    if (editTransferAccountInput) updateTransferAccountOptions(editTransferAccountInput, editTransferAccountLabel);
+    if (editAccountInput) updateAccountOptions(editAccountInput, activeAccountId);
+    if (editTransferAccountInput) {
+      updateTransferAccountOptions(
+        editTransferAccountInput,
+        editTransferAccountLabel,
+        editAccountInput ? editAccountInput.value : activeAccountId
+      );
+    }
     renderSidebarNotepads();
     
     render();
