@@ -160,7 +160,7 @@
 
     </section>
 
-    <section id="calendarWorkspace" class="calendar-workspace layout-right">
+    <section id="calendarWorkspace" class="calendar-workspace layout-bottom">
       <section id="calendarWindow" class="calendar card">
         <div class="weekday-header">
           <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
@@ -266,19 +266,21 @@
           </div>
           <ul id="transactionList" class="transaction-list"></ul>
         </section>
-
-        <section id="currentMonthTransactionsWindow" class="card resizable-window current-month-sidebar">
-          <div class="list-header month-panel-header">
-            <h3 id="currentMonthTransactionsTitle">Current Month Transactions</h3>
-            <button id="currentMonthTransactionsToggle" type="button" class="sidebar-toggle" aria-expanded="true" aria-label="Collapse current month transactions">−</button>
-          </div>
-          <div id="currentMonthTransactionsBody" class="current-month-transactions-body">
-            <ul id="currentMonthTransactionList" class="month-transaction-list"></ul>
-          </div>
-        </section>
       </div>
     </section>
   </main>
+
+  <aside id="currentMonthSidebar" class="current-month-page-sidebar">
+    <section id="currentMonthTransactionsWindow" class="card resizable-window current-month-sidebar">
+      <div class="list-header month-panel-header">
+        <h3 id="currentMonthTransactionsTitle">Current Month Transactions</h3>
+        <button id="currentMonthTransactionsToggle" type="button" class="sidebar-toggle" aria-expanded="true" aria-label="Collapse current month transactions">−</button>
+      </div>
+      <div id="currentMonthTransactionsBody" class="current-month-transactions-body">
+        <ul id="currentMonthTransactionList" class="month-transaction-list"></ul>
+      </div>
+    </section>
+  </aside>
 
   <div id="importPreviewModal" class="modal-backdrop" hidden aria-hidden="true">
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="importPreviewTitle">

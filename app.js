@@ -57,6 +57,7 @@ const firstNegativeBalanceDisplay = document.getElementById("firstNegativeBalanc
 const startingBalanceDisplay = document.getElementById("startingBalanceDisplay");
 const calendarWorkspace = document.getElementById("calendarWorkspace");
 const workspacePanels = document.getElementById("workspacePanels");
+const currentMonthSidebar = document.getElementById("currentMonthSidebar");
 const toggleRightPanelBtn = document.getElementById("toggleRightPanelBtn");
 const calendarWindow = document.getElementById("calendarWindow");
 const calendarDragHandle = document.getElementById("calendarDragHandle");
@@ -514,16 +515,18 @@ function getSavedPanelLayout() {
 }
 
 function applyRightPanelVisibility(visible) {
-  if (!calendarWorkspace || !workspacePanels || !toggleRightPanelBtn) {
+  if (!toggleRightPanelBtn) {
     return;
   }
 
   const shouldShow = Boolean(visible);
-  calendarWorkspace.classList.toggle("panel-hidden", !shouldShow);
-  workspacePanels.classList.toggle("hidden", !shouldShow);
+  document.body.classList.toggle("right-panel-hidden", !shouldShow);
+  if (currentMonthSidebar) {
+    currentMonthSidebar.classList.toggle("hidden", !shouldShow);
+  }
   toggleRightPanelBtn.textContent = shouldShow ? "▣" : "▢";
   toggleRightPanelBtn.setAttribute("aria-expanded", String(shouldShow));
-  toggleRightPanelBtn.title = shouldShow ? "Hide right panel" : "Show right panel";
+  toggleRightPanelBtn.title = shouldShow ? "Hide month panel" : "Show month panel";
 
   try {
     localStorage.setItem(RIGHT_PANEL_VISIBILITY_KEY, String(shouldShow));
