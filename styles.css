@@ -851,6 +851,9 @@ body {
   order: 2;
   width: 100%;
   max-width: 340px;
+  align-self: start;
+  position: sticky;
+  top: 16px;
 }
 
 .calendar-workspace.panel-hidden {
@@ -873,6 +876,9 @@ body {
   order: 1;
   width: 100%;
   max-width: 340px;
+  align-self: start;
+  position: sticky;
+  top: 16px;
 }
 
 .workspace-panels .resizable-window {
