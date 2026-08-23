@@ -464,7 +464,7 @@ body.right-panel-hidden {
 }
 
 .controls.card {
-  max-width: 1400px;
+  max-width: 1100px;
 }
 
 .month-controls {
@@ -757,7 +757,7 @@ body.right-panel-hidden {
 }
 
 .calendar-workspace {
-  max-width: 1400px;
+  max-width: 1100px;
   width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -929,7 +929,7 @@ body.right-panel-hidden {
 }
 
 .calendar-workspace.layout-bottom .calendar {
-  max-width: 1400px;
+  max-width: 1100px;
   justify-self: center;
 }
 

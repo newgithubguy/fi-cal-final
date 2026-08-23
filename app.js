@@ -473,10 +473,9 @@ try {
 function applyPanelLayout(layout) {
   if (!calendarWorkspace) return;
 
-  const normalizedLayout = layout === "left" || layout === "bottom" ? layout : "right";
-  calendarWorkspace.classList.toggle("layout-left", normalizedLayout === "left");
-  calendarWorkspace.classList.toggle("layout-right", normalizedLayout === "right");
-  calendarWorkspace.classList.toggle("layout-bottom", normalizedLayout === "bottom");
+  const normalizedLayout = "bottom";
+  calendarWorkspace.classList.remove("layout-left", "layout-right");
+  calendarWorkspace.classList.add("layout-bottom");
 
   if (panelLeftBtn) {
     panelLeftBtn.setAttribute("aria-pressed", String(normalizedLayout === "left"));
@@ -492,7 +491,7 @@ function applyPanelLayout(layout) {
 }
 
 function setPanelLayout(layout) {
-  const normalizedLayout = layout === "left" ? "left" : "right";
+  const normalizedLayout = "bottom";
   applyPanelLayout(normalizedLayout);
 
   try {
@@ -503,15 +502,7 @@ function setPanelLayout(layout) {
 }
 
 function getSavedPanelLayout() {
-  try {
-    const savedLayout = localStorage.getItem(PANEL_LAYOUT_STORAGE_KEY);
-    if (savedLayout === "left" || savedLayout === "right") {
-      return savedLayout;
-    }
-    return "right";
-  } catch {
-    return "right";
-  }
+  return "bottom";
 }
 
 function applyRightPanelVisibility(visible) {
