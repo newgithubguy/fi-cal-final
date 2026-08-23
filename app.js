@@ -558,8 +558,8 @@ if (panelBottomBtn) {
 
 if (toggleRightPanelBtn) {
   toggleRightPanelBtn.addEventListener("click", () => {
-    const nextState = !workspacePanels?.classList.contains("hidden");
-    applyRightPanelVisibility(!nextState);
+    const isExpanded = toggleRightPanelBtn.getAttribute("aria-expanded") !== "false";
+    applyRightPanelVisibility(!isExpanded);
   });
 }
 
