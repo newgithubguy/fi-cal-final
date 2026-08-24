@@ -4,12 +4,18 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
 const PORT = Number.parseInt(process.env.PORT || '3000', 10);
 const DB_PATH = process.env.DB_PATH || '/data/finance.db';
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+
+if (!process.env.SESSION_SECRET) {
+  console.warn('SESSION_SECRET not set; generated a random in-memory secret for this process only.');
+}
 
 // Ensure data directory exists
 const dataDir = path.dirname(DB_PATH);
@@ -24,12 +30,14 @@ app.use(cors({
 }));
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'finance-calendar-secret-change-in-production',
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
-    secure: false, // Set to true if using HTTPS
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
+    sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
   }
 }));

@@ -752,20 +752,32 @@ function renderPayeesList() {
   payeeHistory.forEach((payee, index) => {
     const li = document.createElement("li");
     li.className = "manage-item";
-    li.innerHTML = `
-      <span class="manage-item-text">${payee}</span>
-      <div class="manage-item-actions">
-        <button class="manage-edit-btn" title="Edit">✎</button>
-        <button class="manage-delete-btn" title="Delete">×</button>
-      </div>
-    `;
-    
-    const editBtn = li.querySelector(".manage-edit-btn");
-    const deleteBtn = li.querySelector(".manage-delete-btn");
-    
+
+    const itemText = document.createElement("span");
+    itemText.className = "manage-item-text";
+    itemText.textContent = payee;
+
+    const actions = document.createElement("div");
+    actions.className = "manage-item-actions";
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "manage-edit-btn";
+    editBtn.title = "Edit";
+    editBtn.type = "button";
+    editBtn.textContent = "✎";
     editBtn.onclick = () => editPayee(index);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "manage-delete-btn";
+    deleteBtn.title = "Delete";
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "×";
     deleteBtn.onclick = () => deletePayee(index);
-    
+
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+    li.appendChild(itemText);
+    li.appendChild(actions);
     payeesList.appendChild(li);
   });
 }
@@ -783,20 +795,32 @@ function renderDescriptionsList() {
   descriptionHistory.forEach((description, index) => {
     const li = document.createElement("li");
     li.className = "manage-item";
-    li.innerHTML = `
-      <span class="manage-item-text">${description}</span>
-      <div class="manage-item-actions">
-        <button class="manage-edit-btn" title="Edit">✎</button>
-        <button class="manage-delete-btn" title="Delete">×</button>
-      </div>
-    `;
-    
-    const editBtn = li.querySelector(".manage-edit-btn");
-    const deleteBtn = li.querySelector(".manage-delete-btn");
-    
+
+    const itemText = document.createElement("span");
+    itemText.className = "manage-item-text";
+    itemText.textContent = description;
+
+    const actions = document.createElement("div");
+    actions.className = "manage-item-actions";
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "manage-edit-btn";
+    editBtn.title = "Edit";
+    editBtn.type = "button";
+    editBtn.textContent = "✎";
     editBtn.onclick = () => editDescription(index);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "manage-delete-btn";
+    deleteBtn.title = "Delete";
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "×";
     deleteBtn.onclick = () => deleteDescription(index);
-    
+
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+    li.appendChild(itemText);
+    li.appendChild(actions);
     descriptionsList.appendChild(li);
   });
 }
@@ -820,20 +844,31 @@ function renderAmountsList() {
       ? formatCurrency(numericAmount)
       : amountValue;
 
-    li.innerHTML = `
-      <span class="manage-item-text">${displayValue}</span>
-      <div class="manage-item-actions">
-        <button class="manage-edit-btn" title="Edit">✎</button>
-        <button class="manage-delete-btn" title="Delete">×</button>
-      </div>
-    `;
+    const itemText = document.createElement("span");
+    itemText.className = "manage-item-text";
+    itemText.textContent = displayValue;
 
-    const editBtn = li.querySelector(".manage-edit-btn");
-    const deleteBtn = li.querySelector(".manage-delete-btn");
+    const actions = document.createElement("div");
+    actions.className = "manage-item-actions";
 
+    const editBtn = document.createElement("button");
+    editBtn.className = "manage-edit-btn";
+    editBtn.title = "Edit";
+    editBtn.type = "button";
+    editBtn.textContent = "✎";
     editBtn.onclick = () => editAmountHistoryItem(index);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "manage-delete-btn";
+    deleteBtn.title = "Delete";
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "×";
     deleteBtn.onclick = () => deleteAmountHistoryItem(index);
 
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+    li.appendChild(itemText);
+    li.appendChild(actions);
     amountsList.appendChild(li);
   });
 }
@@ -1912,10 +1947,13 @@ function renderSuggestionsForInput(inputElement, historyArray) {
   const filtered = historyArray.filter(item => 
     !value || String(item).toLowerCase().includes(value)
   ).slice(0, 10);
-  
-  dataList.innerHTML = filtered
-    .map(item => `<option value="${String(item)}"></option>`)
-    .join('');
+
+  dataList.replaceChildren();
+  filtered.forEach((item) => {
+    const option = document.createElement('option');
+    option.value = String(item);
+    dataList.appendChild(option);
+  });
 }
 
 // Setup input history and suggestions

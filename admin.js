@@ -31,19 +31,35 @@ function buildUserRow(user) {
   const row = document.createElement("tr");
 
   const userCell = document.createElement("td");
-  userCell.innerHTML = `
-    <div class="admin-user-name">${user.username}</div>
-    ${user.isCurrentUser ? '<div class="admin-user-meta">Current session</div>' : ""}
-  `;
+  const userName = document.createElement("div");
+  userName.className = "admin-user-name";
+  userName.textContent = user.username;
+  userCell.appendChild(userName);
+
+  if (user.isCurrentUser) {
+    const currentSessionMeta = document.createElement("div");
+    currentSessionMeta.className = "admin-user-meta";
+    currentSessionMeta.textContent = "Current session";
+    userCell.appendChild(currentSessionMeta);
+  }
   row.appendChild(userCell);
 
   const roleCell = document.createElement("td");
-  roleCell.innerHTML = `
-    <label class="admin-toggle ${user.isCurrentUser ? 'is-locked' : ''}">
-      <input type="checkbox" ${user.isAdmin ? "checked" : ""} ${user.isCurrentUser ? "disabled" : ""} data-action="toggle-admin" data-user-id="${user.id}" />
-      <span>${user.isAdmin ? "Admin" : "Standard"}</span>
-    </label>
-  `;
+  const label = document.createElement("label");
+  label.className = `admin-toggle ${user.isCurrentUser ? "is-locked" : ""}`;
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = Boolean(user.isAdmin);
+  checkbox.disabled = Boolean(user.isCurrentUser);
+  checkbox.dataset.action = "toggle-admin";
+  checkbox.dataset.userId = user.id;
+  label.appendChild(checkbox);
+
+  const statusText = document.createElement("span");
+  statusText.textContent = user.isAdmin ? "Admin" : "Standard";
+  label.appendChild(statusText);
+  roleCell.appendChild(label);
   row.appendChild(roleCell);
 
   const createdCell = document.createElement("td");
@@ -55,12 +71,29 @@ function buildUserRow(user) {
   row.appendChild(dataCell);
 
   const actionsCell = document.createElement("td");
-  actionsCell.innerHTML = `
-    <div class="admin-actions">
-      <button type="button" class="back-link admin-action-btn" data-action="reset-password" data-user-id="${user.id}" data-username="${user.username}">Reset password</button>
-      <button type="button" class="admin-delete-btn" data-action="delete-user" data-user-id="${user.id}" data-username="${user.username}" ${user.isCurrentUser ? "disabled" : ""}>Delete</button>
-    </div>
-  `;
+  const actionsWrap = document.createElement("div");
+  actionsWrap.className = "admin-actions";
+
+  const resetButton = document.createElement("button");
+  resetButton.type = "button";
+  resetButton.className = "back-link admin-action-btn";
+  resetButton.dataset.action = "reset-password";
+  resetButton.dataset.userId = user.id;
+  resetButton.dataset.username = user.username;
+  resetButton.textContent = "Reset password";
+  actionsWrap.appendChild(resetButton);
+
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "admin-delete-btn";
+  deleteButton.dataset.action = "delete-user";
+  deleteButton.dataset.userId = user.id;
+  deleteButton.dataset.username = user.username;
+  deleteButton.disabled = Boolean(user.isCurrentUser);
+  deleteButton.textContent = "Delete";
+  actionsWrap.appendChild(deleteButton);
+
+  actionsCell.appendChild(actionsWrap);
   row.appendChild(actionsCell);
 
   return row;
@@ -106,7 +139,14 @@ async function loadUsers() {
       usersTableBody.appendChild(buildUserRow(user));
     });
   } catch (error) {
-    usersTableBody.innerHTML = `<tr><td colspan="5" class="admin-empty">${error.message}</td></tr>`;
+    usersTableBody.innerHTML = "";
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.className = "admin-empty";
+    cell.textContent = error.message;
+    row.appendChild(cell);
+    usersTableBody.appendChild(row);
     setMessage(error.message, "error");
   }
 }
